@@ -1,0 +1,364 @@
+\documentclass[pdftex,12pt,a4paper]{article}
+\renewcommand{\abstractname}{About this package}
+
+\include{header}
+
+\begin{document}
+
+\title{Simple MVC Framework - Install guide}
+\author{Yoann Mikami}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+This package contains the files needed to build a web application using
+an \keyword{MVC}\footnote{(Model-View-Controller)} oriented architecture.
+
+This PDF describes the steps needed to setup the initial environment needed
+to develop a new web application. This can also be used as a reference for existing sites as well.
+\end{abstract}
+
+\tableofcontents
+
+\cleardoublepage
+
+\section{Installation}
+
+\subsection{Requirements}
+
+\begin{description}
+    \item[OS] \hfill \\
+    Linux (untested on Windows OSes)
+    \item[Software] \hfill \\
+    \begin{itemize}
+        \item PHP \textgreater{} 5.2
+        \item Apache 2.x
+        \item MySQL 5.x or MongoDB 1.x
+    \end{itemize}
+\end{description}
+
+\subsection{Dependencies}
+Below are the 3rd party packages/frameworks used by this framework.
+They should all be supplied under the \filename{opt/} directory so nothing is needed.
+
+\begin{description}
+    \item[\url[WideImage]{http://wideimage.sourceforge.net/}] \hfill \\
+OO Image manipulation framework. Used by \classname{Utils\_ResourceLoader\_Image}. Licence : \href{http://wideimage.sourceforge.net/license/}{GNU LGPL 2.1}
+    \item[\url[savant3]{http://phpsavant.com}] \hfill \\
+Savant3 templating engine - not maintained anymore. Licence: GNU LGPL
+    \item[\url[spyc]{https://github.com/mustangostang/spyc/}] \hfill \\
+Simple PHP YAML Class : YAML parser. Licence : MIT
+    \item[\url[Zend]{http://framework.zend.com}] \hfill \\
+Zend Framework (partial, 1.12). Used packages :
+        \begin{itemize}
+            \item{Cache}
+            \item{Db}
+            \item{Json}
+            \item{Loader}
+            \item{Locale}
+            \item{Log}
+            \item{Registry}
+            \item{Session}
+            \item{Translate}
+        \end{itemize}
+\end{description}
+
+\subsection{Recommended structure for a web application}
+The developer is free to choose where everything is stored under the server \keyword{docroot}.
+The following is the recommendation (folder name can be different for each module) :
+\begin{description}
+    \item[framework] \hfill \\
+This framework. May be shared
+    \item[my\_site] \hfill \\
+The web application specific files (models, controllers, views, layouts, scripts, css\ldots)
+    \item[my\_site\_resources] \hfill \\
+Files handled by the server, user supplied resources (application logs, cached files, uploaded files\ldots)
+    \item[docroot] \hfill \\
+The entry point to web applications
+\end{description}
+
+These four subparts can either be located at a single location (not recommended), or split (recommended).
+Split rationales :
+\begin{description}
+    \item[framework] \hfill \\
+This framework serves as the base for a web application, and thus can be used by many different ones. \\
+Putting this framework under its specific location allows to share the same code among several web applications installed on the same server. \\
+See the \docref{Developer guide} for the framework structure.
+    \item[my\_site] \hfill \\
+Separating the site core files (managed by the webmaster/developer) from the server/user resources
+    \item[resources] \hfill \\
+Eases maintenance; the site files can be packaged into a \emph{tarball} and extracted to the proper location, without risking to overwrite files that are not part of it. Logs and cached files can be preserved easily as well.
+server resources folders usually have special folder permissions and thus is more easily managed when it is separated.
+    \item[\keyword{docroot}] \hfill \\
+For security purposes, \keyword{docroot} should have its own directory with a small \keyword{bootstrap} needed to start the application. \\
+The intialization class \classname{Init} (in this framework) can be called by the \keyword{bootstrap} by pointing to its location (outside \keyword{docroot}). \\
+This setup assumes a single \keyword{docroot} is shared among all web applications installed on the server. This can be changed by creating an additional folder \uservariable{my\_site} which would contain folders \uservariable{my\_site}, \filename{resources} and \filename{docroot}.
+\end{description}
+
+This framework uses ``application \keyword{namespace} concept'' to separate the different web application contents. (This concept is explained in more details later)
+An application \keyword{namespace} allows inter-related applications to share the same workspace. A typical use of \keyword{namespace} would be a web site
+with a \keyword{front-end} (typically read only) and a \keyword{back-end} (\eg the admin interface). Both have shared resources, shared assets, yet some differences may
+be needed at some specific locations.
+\begin{note}
+Namespacing should not be used for two UNRELATED web applications, as most resources are \emph{shared}, ie. both applications can access
+each other's assets, which is not a good idea in general in this use case. A different folder (\eg \uservariable{my\_site2}) should be created instead.
+\end{note}
+
+\subsection{Creating the application structure}
+A web application should have the following structure :
+
+\begin{unbreakable}
+\dirtree{%
+.1 \uservariable{site root dir}.
+.2 config
+    \treedesc{The web application config file (Recommended : \snippet{chmod 0775})}.
+.2 controllers
+    \treedesc{location for controllers used by the web application}.
+.2 langs
+    \treedesc{language files (\keyword{gettext})}.
+.2 layouts
+    \treedesc{location for template files}.
+.2 libs
+    \treedesc{PHP classes}.
+.3 opt
+    \treedesc{Application specific 3rd party tools}.
+.3 plugins
+    \treedesc{init, view, resource plugins}.
+.4 Init
+    \treedesc{Init plugins folder}.
+.4 View
+    \treedesc{View plugins folder}.
+.4 Resource
+    \treedesc{Resource plugins folder}.
+.3 savant3.
+.4 Savant3.
+.5 resources
+    \treedesc{Application specific Savant3 template filters and plugins folder}.
+.2 models
+    \treedesc{location for models used by the web application}.
+.2 skins
+    \treedesc{Site resources : graphics, \keyword{CSS}, \keyword{javascript}}.
+.2 views
+    \treedesc{location for view files used by the web application}.
+}
+\end{unbreakable}
+
+\subsection{Creating the server resources structure}
+When separated from the site structure, the server resources should be structured like the following :
+
+\begin{unbreakable}
+\dirtree{%
+.1 \uservariable{Resources root dir}.
+.2 cache
+    \treedesc{cached files (if caching is enabled) \\
+    (Recommended : \snippet{chmod 2775}, \snippet{chown www-data:www-data})}.
+.2 logs
+    \treedesc{The web application logs \\
+    (Recommended : \snippet{chmod 2775}, \snippet{chown www-data:www-data})}.
+.2 upload
+    \treedesc{user uploaded files \\
+    (Recommended : \snippet{chmod 0775})}.
+}
+\end{unbreakable}
+
+Server resources and application structures can be merged if there is no need for separating them.
+If \filename{resources} folder is external to the \uservariable{site root dir}, the latter should have a symlink pointing at the former :
+\begin{unbreakable}
+\dirtree{%
+.1 \uservariable{site root dir}.
+.2 (\ldots).
+.2 resources
+    \treedesc{\ding{213} [\uservariable{resources root dir}]}.
+.2 (\ldots).
+}
+\end{unbreakable}
+
+It is also possible to mix \emph{symlink} with physical folders inside a \filename{resources} folder inside \uservariable{site root dir} :
+\begin{unbreakable}
+\dirtree{%
+.1 \uservariable{site root dir}.
+.2 (\ldots).
+.2 resources
+    \treedesc{\uservariable{resources root dir}}.
+.3 cache
+    \treedesc{Cache folder (physical)}.
+.3 logs
+    \treedesc{Log folder (physical)}.
+.3 upload
+    \treedesc{\ding{213} [\uservariable{path to external upload folder}]}.
+}
+\end{unbreakable}
+
+\section{Setup application namespace(s)}
+
+\subsection{About namespaces}
+Through this framework, every web application have at least one \keyword{namespace} : the application itself.
+By default, a \keyword{namespace} is defined as the server name the application runs onto. \\
+For instance, the default application \keyword{namespace} for \url{http://www.my_site.com/} would be \varvalue{www.my\_site.com}.
+Namespaces are heavily used in the framework;
+
+Namespaces allow a logical separation of web applications while sharing physical resources.
+How an application is namespaced and how many it has has to identified by the developer.
+
+\subsubsection{Use cases}
+    \begin{itemize}
+        \item A typical 2 \keyword{namespaces} web application is one with front/back ends.
+Thus, \url{http://www.my_site.com} would be the \keyword{front-end}, and \url{http://admin.my_site.com} the \keyword{back-end}.
+However, the code is shared for both of them, unless one \keyword{override}s the other.
+
+\begin{note}
+  Apache \keyword{mod\_rewrite} is required to allow namespacing to work.
+\end{note}
+        \item An intranet must be accessed through different credentials depending on the user role : \\
+            - Recruiter, Interviewer, Administrator \\
+  Each of these could yield to 3 application \keyword{namespace}s, such as \varvalue{recruiter.my\_site}, \varvalue{itw.my\_site}, \varvalue{admin.my\_site}.
+  Each \keyword{namespace} would then provide different functionalities while keeping a global layout, sharing common features\ldots \\
+    While this could be used to apply simple permission control system, application namespacing does not
+    replace a user permissions engine such as \keyword{ACL}\footnote{Access Control List} or \keyword{Role Based Access Control}.
+        \item An application is deployment in a development server, staging, production server that all require different settings.
+  The config file uses application \keyword{namespace}s so each can use common settings while overridding whatever's needed.
+  In such a case, the application would exactly be the same for all \keyword{namespace}s, which would be used solely for configuration.
+        \item A web site has a PC and mobile version : both share the same resources and text, while the layout may differ to
+  address smaller screen sizes.\\
+  Two \keyword{namespace}s, mobile and pc can achieve this : page layout can be customized, while the content is still shared.
+\end{itemize}
+
+\subsubsection{Namespace overridding}
+Application \keyword{namespace}s rely on \keyword{inheritance}.
+
+To allow different \keyword{namespace}s to share common resources, one must inherit another.
+For case 1 above, admin \keyword{namespace} would thus inherit the front \keyword{namespace}.
+The other way round would not work as the former probably has more features than the latter,
+and inheritance allows to \keyword{override} the parent's assets or add your own, but not disable values set by the parent.\\
+For case 4, mobile would inherit pc.
+
+\begin{note}
+The top application \keyword{namespace} should \emph{always} inherit ``\varvalue{default}'' in the configuration file.
+\end{note}
+
+When two or more \keyword{namespace}s are defined, the following process is done when accessing any namespaced resource.
+Knowing this allows to determine which \keyword{namespace} should inherit which :
+
+Three \keyword{namespace}s are defined (excl. ``\varvalue{default}'') :
+\begin{center}
+\begin{unbreakable}
+{\scriptsize
+\begin{verbatim}
+	baz --- overrides ---> bar --- overrides ---> foo --- overrides ---> default
+\end{verbatim}
+}
+\end{unbreakable}
+\end{center}
+
+When requesting resource \variable{foobar} :
+\begin{itemize}
+    \item Is \varvalue{foobar} resource available under \keyword{namespace} \varvalue{baz} ? If YES, then use it $\implies$ [END]
+    \item Is \varvalue{foobar} resource available under \keyword{namespace} \varvalue{bar} ? If YES, then use it $\implies$ [END]
+    \item Is \varvalue{foobar} resource available under \keyword{namespace} \varvalue{foo} ? If YES, then use it $\implies$ [END]
+    \item Resource not found $\implies$ [END]
+\end{itemize}
+\begin{note}
+The ``\varvalue{default}'' \keyword{namespace} is not used during the process.\\
+\emph{Exception}: \keyword{skin} files also look for the ``\varvalue{default}'' \keyword{namespace} as well. Non-namespace specific resources can be placed under it.
+It is only used to define top-level directories for the various resources the application can access.
+Under each of these, \keyword{namespace}s should be defined.
+\end{note}
+
+\subsection{Define namespaces in the web application}
+For each \keyword{namespace} the application is expected to have (more can be added anytime), a folder named after the \keyword{namespace}
+should be created in the following folders :
+\begin{unbreakable}
+\dirtree{%
+.1 Site root dir.
+.2 config.
+.3 controllers.
+.4 \uservariable{namespace}.
+.3 langs.
+.4 \uservariable{namespace}.
+.3 layouts.
+.4 \uservariable{namespace}.
+.3 libs.
+.3 models.
+.4 \uservariable{namespace}.
+.3 skins.
+.4 \varvalue{default}.
+.4 \uservariable{namespace}.
+.3 views.
+.4 \uservariable{namespace}.
+}
+\end{unbreakable}
+
+\begin{itemize}
+    \item \filename{config/config.yaml} contains the configuration for all \keyword{namespace}s in a single file and thus is not namespaced.
+    \item \filename{libs} is also shared among all \keyword{namespace}s.
+\end{itemize}
+
+Folders inside \varvalue{resources} are not namespaced using folders :
+\begin{itemize}
+    \item Under \filename{logs/}, \filename{cache/} generated files are prefixed with the application \keyword{namespace}.
+    \item \filename{upload} is not namespaced at all, and all user uploaded files are common to all \keyword{namespace}s. \\
+    For \keyword{namespace} specific images\ldots the application skins folder should be used instead.
+\end{itemize}
+
+
+\section{Configuring the web application}
+
+The configuration file (a sample is available in this framework's \filename{config-default} folder)
+\filename{config.yaml} should be created under the \uservariable{site root dir} \filename{config/} directory.
+the \keyword{namespace} ``\varvalue{default}'' is required, thus should always be defined; each \keyword{namespace} the web application
+uses should then have a top definition the same way ``\varvalue{default}'' is defined in the sample \filename{config.yaml}.
+When a \keyword{namespace} inherits (or \keyword{override}s) another, the \variable{overrides: \uservariable{parent}} config definition should be used.
+Each \keyword{namespace} configuration definition only need to (re)define configuration properties that are different (or missing) from its parent.
+Refer to the \docref{Developer guide} for the configuration parameters.
+
+
+\section{Creating the bootstrap file}
+
+Each \keyword{namespace} should have its own \keyword{bootstrap} file located under the \keyword{docroot} folder for the application.
+\filename{.htaccess} (or apache vhost config) may be used to dispatch based on specific conditions which \keyword{bootstrap} file to load.
+The \keyword{bootstrap} could by in any language; however, a PHP one is recommended to allow easier interaction with this framework. \\
+The \keyword{bootstrap} only needs to do one action : call this framework's entry point, \snippet{Init::main()}.
+It also needs to define some constants the framework assumes to be defined before init is started :
+\begin{description}
+ \item[\constant{DATA\_DIR}] [Required] \hfill \\
+    Absolute path to the \uservariable{site root dir}
+ \item[\constant{LIB\_DIR}] [Required] \hfill \\
+    Absolute path to the \uservariable{framework root dir}
+ \item[\constant{BOOTSTRAP\_FILE}] [Required] \hfill \\
+    Filename of the bootstrap file called; namely, the file being processed. Typically \snippet{basename(__FILE__)} when called from within the bootstrap file itself.
+ \item[\constant{NAMESPACE}] [Optional] \hfill \\
+    Defaults to \snippet{\$\_SERVER['SERVER\_NAME']} if not defined : \keyword{namespace} to use. \\
+    \keyword{Namespace} is mapped to the same record in the config file, as well as \keyword{namespace} folders inside each \uservariable{site root dir} folder. \\
+    \begin{note}
+    `.' and `-' characters are transformed into `\_' : thus, \keyword{namespace} defined in
+    \filename{config.yaml} should be named accordingly, \eg \varvalue{www.mysite.com} shall become \varvalue{www\_mysite\_com}.\\
+     `-' is transformed into '\_' for \keyword{namespace} folders, and the latter should thus be named accordingly, \eg \varvalue{www.mysite-admin.com} shall become \varvalue{www.mysite\_admin.com}
+    \end{note}
+\end{description}
+$\implies$ This framework's \keyword{docroot} folder contains a sample PHP bootstrap named \filename{namespace.php}.
+
+\section{Creating the .htaccess file}
+
+Depending on where the \keyword{webroot} points at (application's \variable{docroot} directly or somewhere above, \eg httpdocs), the content
+will be different; however, here are a few notes that should be applicable on most cases :
+\begin{itemize}
+    \item Use \keyword{mod\_rewrite} to reroute ALL requests targeting a specific server / domain to the php newly created \keyword{bootstrap} file.
+    Different \keyword{namespace}s should be routed to separate \keyword{bootstrap}s (though not enforced).
+    \item If \uservariable{site root dir} is under \variable{docroot}, disallow access to it : only the \keyword{bootstrap} can access it through PHP \snippet{include}s.
+    \item The \filename{.htaccess} file can be either in the same folder as the \keyword{bootstrap} files, or somewhere else.
+    the \snippet{RewriteRule} should match the chosen organization accordingly.
+\end{itemize}
+
+
+\section{Application ready. good luck!}
+
+Once the system is setup and the basic installation is done, it's time to add content to the application.
+\docref{Developer guide} and this framework \emph{PHPDoc} generated documentation should contain everything needed to start build the application.
+
+\cleardoublepage
+
+\printindex
+
+\eod
+\end{document}
+

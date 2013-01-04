@@ -1,0 +1,14 @@
+---
+layout: nil
+---
+<?php
+    foreach ($this->params as $file => $d) {
+        $file = str_replace('_','.', $file).'.js';
+        $file = Utils_ResourceLocator::scriptFile($file);
+        if (false !== $file) {
+            echo file_get_contents($file);
+            echo PHP_EOL;
+        }
+        // Ignore files not found
+    }
+?>

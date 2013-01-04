@@ -1,0 +1,94 @@
+\contentsline {section}{\numberline {1}Getting started}{3}{section.1}
+\contentsline {subsection}{\numberline {1.1}Features}{3}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Documentation coverage}{3}{subsection.1.2}
+\contentsline {section}{\numberline {2}Framework basics}{4}{section.2}
+\contentsline {subsection}{\numberline {2.1}Framework structure}{4}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Library structure}{4}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Framework request dispatching process}{5}{subsection.2.3}
+\contentsline {subsubsection}{\numberline {2.3.1}Apache virtual host / .htaccess URL rewriting}{5}{subsubsection.2.3.1}
+\contentsline {subsubsection}{\numberline {2.3.2}bootstrapping}{6}{subsubsection.2.3.2}
+\contentsline {subsubsection}{\numberline {2.3.3}Pre-run object}{7}{subsubsection.2.3.3}
+\contentsline {subsubsection}{\numberline {2.3.4}Run Init}{7}{subsubsection.2.3.4}
+\contentsline {subsubsection}{\numberline {2.3.5}Run init plugins (init request)}{9}{subsubsection.2.3.5}
+\contentsline {subsubsection}{\numberline {2.3.6}Parse request}{9}{subsubsection.2.3.6}
+\contentsline {subsubsection}{\numberline {2.3.7}Handle static resources}{9}{subsubsection.2.3.7}
+\contentsline {subsubsection}{\numberline {2.3.8}Request dispatch to controllers}{9}{subsubsection.2.3.8}
+\contentsline {subsubsection}{\numberline {2.3.9}Run view plugins}{10}{subsubsection.2.3.9}
+\contentsline {subsubsection}{\numberline {2.3.10}Render the view}{10}{subsubsection.2.3.10}
+\contentsline {section}{\numberline {3}Introduction to the SimpleMVC framework}{11}{section.3}
+\contentsline {subsection}{\numberline {3.1}Notes to developers}{11}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Managing MVC classes}{12}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}FrontDispatcher}{12}{subsection.3.3}
+\contentsline {subsubsection}{\numberline {3.3.1}Canonical name to controller instance mapping}{12}{subsubsection.3.3.1}
+\contentsline {subsubsection}{\numberline {3.3.2}Get the ``default'' controller}{14}{subsubsection.3.3.2}
+\contentsline {subsubsection}{\numberline {3.3.3}Get the request controller(s)}{14}{subsubsection.3.3.3}
+\contentsline {subsubsection}{\numberline {3.3.4}Dispatch requests to controllers}{15}{subsubsection.3.3.4}
+\contentsline {subsubsection}{\numberline {3.3.5}Canonical name to view instance mapping}{15}{subsubsection.3.3.5}
+\contentsline {subsection}{\numberline {3.4}Managing Models}{16}{subsection.3.4}
+\contentsline {subsubsection}{\numberline {3.4.1}Canonical name to model instance mapping}{16}{subsubsection.3.4.1}
+\contentsline {subsubsection}{\numberline {3.4.2}Creating a model}{17}{subsubsection.3.4.2}
+\contentsline {paragraph}{Implement Iface\_Model}{17}{section*.2}
+\contentsline {paragraph}{Extend SimpleMysqlModel $|$ SimpleMongoDBModel}{18}{section*.3}
+\contentsline {subparagraph}{Unique ID}{18}{section*.4}
+\contentsline {subparagraph}{Defining properties}{19}{section*.5}
+\contentsline {subparagraph}{Hydrating data}{19}{section*.6}
+\contentsline {subparagraph}{Registry objects}{19}{section*.7}
+\contentsline {subparagraph}{Initialization}{20}{section*.8}
+\contentsline {subparagraph}{Define the target collection/table}{20}{section*.9}
+\contentsline {subsection}{\numberline {3.5}Managing controllers}{20}{subsection.3.5}
+\contentsline {subsubsection}{\numberline {3.5.1}Canonical name to controller instance mapping}{20}{subsubsection.3.5.1}
+\contentsline {subsubsection}{\numberline {3.5.2}Creating a controller}{20}{subsubsection.3.5.2}
+\contentsline {paragraph}{Implement Iface\_Controller $|$ Iface\_AjaxController}{20}{section*.10}
+\contentsline {paragraph}{Extends SimpleController $|$ AjaxController}{21}{section*.11}
+\contentsline {subparagraph}{Implementing get/post/ajax dispatchers}{21}{section*.12}
+\contentsline {subparagraph}{Passing request data to views}{22}{section*.13}
+\contentsline {subparagraph}{About POST/Redirect/GET pattern}{22}{section*.14}
+\contentsline {subsection}{\numberline {3.6}Managing layouts}{23}{subsection.3.6}
+\contentsline {subsubsection}{\numberline {3.6.1}About layouts}{23}{subsubsection.3.6.1}
+\contentsline {subsubsection}{\numberline {3.6.2}Layouts location}{23}{subsubsection.3.6.2}
+\contentsline {subsubsection}{\numberline {3.6.3}Writing the layout content}{24}{subsubsection.3.6.3}
+\contentsline {subsubsection}{\numberline {3.6.4}Template filters and plugins}{25}{subsubsection.3.6.4}
+\contentsline {paragraph}{Specify global filters}{25}{section*.15}
+\contentsline {paragraph}{Specify individual view filters}{25}{section*.16}
+\contentsline {paragraph}{Filter Priority}{25}{section*.17}
+\contentsline {paragraph}{Filter / Plugin locations}{26}{section*.18}
+\contentsline {paragraph}{Creating a new filter}{27}{section*.19}
+\contentsline {paragraph}{Creating a new plugin}{27}{section*.20}
+\contentsline {paragraph}{Built-in template filters}{28}{section*.21}
+\contentsline {paragraph}{Built-in template plugins}{28}{section*.22}
+\contentsline {subsection}{\numberline {3.7}Managing views}{29}{subsection.3.7}
+\contentsline {subsubsection}{\numberline {3.7.1}Canonical name to view instance mapping}{29}{subsubsection.3.7.1}
+\contentsline {subsubsection}{\numberline {3.7.2}View hierarchy}{29}{subsubsection.3.7.2}
+\contentsline {subsubsection}{\numberline {3.7.3}View header}{30}{subsubsection.3.7.3}
+\contentsline {subsubsection}{\numberline {3.7.4}Creating a view file}{30}{subsubsection.3.7.4}
+\contentsline {subsubsection}{\numberline {3.7.5}View object}{31}{subsubsection.3.7.5}
+\contentsline {section}{\numberline {4}Plugins}{31}{section.4}
+\contentsline {subsection}{\numberline {4.1}Init plugins}{32}{subsection.4.1}
+\contentsline {subsubsection}{\numberline {4.1.1}Built-in init plugins}{32}{subsubsection.4.1.1}
+\contentsline {paragraph}{Mysql init plugin}{32}{section*.23}
+\contentsline {subparagraph}{Purpose}{32}{section*.24}
+\contentsline {subparagraph}{Configuration}{32}{section*.25}
+\contentsline {subparagraph}{Registry values}{32}{section*.26}
+\contentsline {paragraph}{MongoDB init plugin}{32}{section*.27}
+\contentsline {subparagraph}{Purpose}{32}{section*.28}
+\contentsline {subparagraph}{Configuration}{33}{section*.29}
+\contentsline {subparagraph}{Registry values}{33}{section*.30}
+\contentsline {paragraph}{Session init plugin}{33}{section*.31}
+\contentsline {subparagraph}{Purpose}{33}{section*.32}
+\contentsline {subparagraph}{Configuration}{33}{section*.33}
+\contentsline {subparagraph}{Registry values}{33}{section*.34}
+\contentsline {subsection}{\numberline {4.2}View plugins}{34}{subsection.4.2}
+\contentsline {subsection}{\numberline {4.3}Resource plugins}{34}{subsection.4.3}
+\contentsline {subsubsection}{\numberline {4.3.1}Image resource loader}{34}{subsubsection.4.3.1}
+\contentsline {section}{\numberline {5}Handling translations}{35}{section.5}
+\contentsline {subsection}{\numberline {5.1}i18n in YAML files/view headers}{35}{subsection.5.1}
+\contentsline {section}{\numberline {6}Handling resources}{36}{section.6}
+\contentsline {subsection}{\numberline {6.1}Managing skins}{36}{subsection.6.1}
+\contentsline {subsection}{\numberline {6.2}Managing user uploads}{37}{subsection.6.2}
+\contentsline {section}{\numberline {7}Managing stylesheets and scripts}{37}{section.7}
+\contentsline {subsection}{\numberline {7.1}Adding stylesheets}{37}{subsection.7.1}
+\contentsline {subsection}{\numberline {7.2}Adding scripts}{38}{subsection.7.2}
+\contentsline {subsection}{\numberline {7.3}Render stylesheets and scripts in layouts}{39}{subsection.7.3}
+\contentsline {subsubsection}{\numberline {7.3.1}stylesheets template plugin}{39}{subsubsection.7.3.1}
+\contentsline {subsubsection}{\numberline {7.3.2}scripts template plugin}{39}{subsubsection.7.3.2}
+\contentsline {section}{\numberline {A}Configuration}{41}{appendix.A}

@@ -1,0 +1,61 @@
+\BOOKMARK [1][-]{section.1}{Getting started}{}
+\BOOKMARK [2][-]{subsection.1.1}{Features}{section.1}
+\BOOKMARK [2][-]{subsection.1.2}{Documentation coverage}{section.1}
+\BOOKMARK [1][-]{section.2}{Framework basics}{}
+\BOOKMARK [2][-]{subsection.2.1}{Framework structure}{section.2}
+\BOOKMARK [2][-]{subsection.2.2}{Library structure}{section.2}
+\BOOKMARK [2][-]{subsection.2.3}{Framework request dispatching process}{section.2}
+\BOOKMARK [3][-]{subsubsection.2.3.1}{Apache virtual host / .htaccess URL rewriting}{subsection.2.3}
+\BOOKMARK [3][-]{subsubsection.2.3.2}{bootstrapping}{subsection.2.3}
+\BOOKMARK [3][-]{subsubsection.2.3.3}{Pre-run object}{subsection.2.3}
+\BOOKMARK [3][-]{subsubsection.2.3.4}{Run Init}{subsection.2.3}
+\BOOKMARK [3][-]{subsubsection.2.3.5}{Run init plugins \(init request\)}{subsection.2.3}
+\BOOKMARK [3][-]{subsubsection.2.3.6}{Parse request}{subsection.2.3}
+\BOOKMARK [3][-]{subsubsection.2.3.7}{Handle static resources}{subsection.2.3}
+\BOOKMARK [3][-]{subsubsection.2.3.8}{Request dispatch to controllers}{subsection.2.3}
+\BOOKMARK [3][-]{subsubsection.2.3.9}{Run view plugins}{subsection.2.3}
+\BOOKMARK [3][-]{subsubsection.2.3.10}{Render the view}{subsection.2.3}
+\BOOKMARK [1][-]{section.3}{Introduction to the SimpleMVC framework}{}
+\BOOKMARK [2][-]{subsection.3.1}{Notes to developers}{section.3}
+\BOOKMARK [2][-]{subsection.3.2}{Managing MVC classes}{section.3}
+\BOOKMARK [2][-]{subsection.3.3}{FrontDispatcher}{section.3}
+\BOOKMARK [3][-]{subsubsection.3.3.1}{Canonical name to controller instance mapping}{subsection.3.3}
+\BOOKMARK [3][-]{subsubsection.3.3.2}{Get the ``default'' controller}{subsection.3.3}
+\BOOKMARK [3][-]{subsubsection.3.3.3}{Get the request controller\(s\)}{subsection.3.3}
+\BOOKMARK [3][-]{subsubsection.3.3.4}{Dispatch requests to controllers}{subsection.3.3}
+\BOOKMARK [3][-]{subsubsection.3.3.5}{Canonical name to view instance mapping}{subsection.3.3}
+\BOOKMARK [2][-]{subsection.3.4}{Managing Models}{section.3}
+\BOOKMARK [3][-]{subsubsection.3.4.1}{Canonical name to model instance mapping}{subsection.3.4}
+\BOOKMARK [3][-]{subsubsection.3.4.2}{Creating a model}{subsection.3.4}
+\BOOKMARK [2][-]{subsection.3.5}{Managing controllers}{section.3}
+\BOOKMARK [3][-]{subsubsection.3.5.1}{Canonical name to controller instance mapping}{subsection.3.5}
+\BOOKMARK [3][-]{subsubsection.3.5.2}{Creating a controller}{subsection.3.5}
+\BOOKMARK [2][-]{subsection.3.6}{Managing layouts}{section.3}
+\BOOKMARK [3][-]{subsubsection.3.6.1}{About layouts}{subsection.3.6}
+\BOOKMARK [3][-]{subsubsection.3.6.2}{Layouts location}{subsection.3.6}
+\BOOKMARK [3][-]{subsubsection.3.6.3}{Writing the layout content}{subsection.3.6}
+\BOOKMARK [3][-]{subsubsection.3.6.4}{Template filters and plugins}{subsection.3.6}
+\BOOKMARK [2][-]{subsection.3.7}{Managing views}{section.3}
+\BOOKMARK [3][-]{subsubsection.3.7.1}{Canonical name to view instance mapping}{subsection.3.7}
+\BOOKMARK [3][-]{subsubsection.3.7.2}{View hierarchy}{subsection.3.7}
+\BOOKMARK [3][-]{subsubsection.3.7.3}{View header}{subsection.3.7}
+\BOOKMARK [3][-]{subsubsection.3.7.4}{Creating a view file}{subsection.3.7}
+\BOOKMARK [3][-]{subsubsection.3.7.5}{View object}{subsection.3.7}
+\BOOKMARK [1][-]{section.4}{Plugins}{}
+\BOOKMARK [2][-]{subsection.4.1}{Init plugins}{section.4}
+\BOOKMARK [3][-]{subsubsection.4.1.1}{Built-in init plugins}{subsection.4.1}
+\BOOKMARK [2][-]{subsection.4.2}{View plugins}{section.4}
+\BOOKMARK [2][-]{subsection.4.3}{Resource plugins}{section.4}
+\BOOKMARK [3][-]{subsubsection.4.3.1}{Image resource loader}{subsection.4.3}
+\BOOKMARK [1][-]{section.5}{Handling translations}{}
+\BOOKMARK [2][-]{subsection.5.1}{i18n in YAML files/view headers}{section.5}
+\BOOKMARK [1][-]{section.6}{Handling resources}{}
+\BOOKMARK [2][-]{subsection.6.1}{Managing skins}{section.6}
+\BOOKMARK [2][-]{subsection.6.2}{Managing user uploads}{section.6}
+\BOOKMARK [1][-]{section.7}{Managing stylesheets and scripts}{}
+\BOOKMARK [2][-]{subsection.7.1}{Adding stylesheets}{section.7}
+\BOOKMARK [2][-]{subsection.7.2}{Adding scripts}{section.7}
+\BOOKMARK [2][-]{subsection.7.3}{Render stylesheets and scripts in layouts}{section.7}
+\BOOKMARK [3][-]{subsubsection.7.3.1}{stylesheets template plugin}{subsection.7.3}
+\BOOKMARK [3][-]{subsubsection.7.3.2}{scripts template plugin}{subsection.7.3}
+\BOOKMARK [1][-]{appendix.A}{Configuration}{}

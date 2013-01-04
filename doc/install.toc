@@ -1,0 +1,15 @@
+\contentsline {section}{\numberline {1}Installation}{2}{section.1}
+\contentsline {subsection}{\numberline {1.1}Requirements}{2}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Dependencies}{2}{subsection.1.2}
+\contentsline {subsection}{\numberline {1.3}Recommended structure for a web application}{3}{subsection.1.3}
+\contentsline {subsection}{\numberline {1.4}Creating the application structure}{4}{subsection.1.4}
+\contentsline {subsection}{\numberline {1.5}Creating the server resources structure}{4}{subsection.1.5}
+\contentsline {section}{\numberline {2}Setup application namespace(s)}{5}{section.2}
+\contentsline {subsection}{\numberline {2.1}About namespaces}{5}{subsection.2.1}
+\contentsline {subsubsection}{\numberline {2.1.1}Use cases}{5}{subsubsection.2.1.1}
+\contentsline {subsubsection}{\numberline {2.1.2}Namespace overridding}{6}{subsubsection.2.1.2}
+\contentsline {subsection}{\numberline {2.2}Define namespaces in the web application}{7}{subsection.2.2}
+\contentsline {section}{\numberline {3}Configuring the web application}{7}{section.3}
+\contentsline {section}{\numberline {4}Creating the bootstrap file}{8}{section.4}
+\contentsline {section}{\numberline {5}Creating the .htaccess file}{8}{section.5}
+\contentsline {section}{\numberline {6}Application ready. good luck!}{9}{section.6}

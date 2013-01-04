@@ -1,0 +1,286 @@
+[For best formatting, tab space should be 4]
+
+Simple MVC Framework
+====================
+
+This package contains the files needed to build a web application using
+an MVC (Model-View-Controller) oriented architecture.
+
+This INSTALL describes the steps needed to setup the initial environment needed
+to develop a new web application.
+This can also be used as a reference for existing sites as well.
+
+This framework is licenced under the MIT licence.
+
+
+INSTALLATION
+============
+
+Requirements
+------------
+
+■ OS        :   Linux (untested on Windows OS)
+■ Software  :   PHP >= 5.2
+                Apache 2.x
+                MySQL 5.x | MongoDB 1.x
+
+Dependencies
+------------
+
+Below are the 3rd party packages/frameworks used by this framework.
+They should all be supplied under the opt/ directory so nothing is needed.
+
+■ WideImage     | OO Image manipulation framework. Used by Utils_ResourceLoader_Image.
+                |   * Licence : GNU LGPL 2.1
+                |   * Source : http://wideimage.sourceforge.net/
+■ savant3       | Savant3 templating engine - not maintained anymore.
+                |   * Licence : GNU LGPL
+                |   * Source : http://phpsavant.com
+■ spyc          | Simple PHP YAML Class : YAML parser.
+                |   * Licence : MIT
+                |   * Source : https://github.com/mustangostang/spyc/
+■ Zend          | Zend Framework (partial, 1.12).
+                |   * Licence : MIT
+                |   * Source : http://www.framework.zend.com
+                |   * Used packages :
+                |    - Cache
+                |    - Db
+                |    - Json
+                |    - Loader
+                |    - Locale
+                |    - Log
+                |    - Registry
+                |    - Session
+                |    - Translate
+
+Recommended structure for a web application
+-------------------------------------------
+
+The developer is free to choose where everything is stored under the server docroot.
+The following is what the recommendation (folder name can be different for each module) :
+■ framework          : This framework. May be shared
+■ my_site            : The web application specific files (models, ontrollers, views, layouts, scripts, css...)
+■ my_site_resources  : Files handled by the server, user supplied resources (application logs, cached files, uploaded files...)
+■ docroot            : The entry point to web applications
+
+These four subparts can either be located at a single location (not recommended), or split (recommended).
+Split rationales :
+    - framework      :   This framework serves as the base for a web application, and thus can be used by many different ones.
+                         Putting this framework under its specific location allows to share the same code among several web applications installed on the same server.
+    - my_site/       :   Separating the site core files (managed by the webmaster/developer) from the server/user resources
+      resources          eases maintenance; the site files can be packaged into a tarball and extracted to the proper location, without risking to
+                         overwrite files that are not part of it. Logs and cached files can be preserved easily as well.
+                         server resources folders usually have special folder permissions and thus is more easily managed when it is separated.
+    - docroot        :   For security purposes, docroot should have its own directory with a small bootstrap needed to start the application.
+                         The intialization class Init (in this framework) can be called by the bootstrap by pointing to its location (outside docroot).
+                         This setup assumes a single docroot is shared among all web applications installed on the server. This can be changed
+                         by creating an additional folder <my_site> which would contain folders my_site, resources and docroot.
+
+This framework uses "application namespace" concept to separate the different web application contents. (This concept is explained in more details later)
+An application namespace allows inter-related applications to share the same workspace. A typical use of namespace would be a web site
+with a front end (read only) and a back end (the admin interface). Both have shared resources, shared assets, yet some differences may
+be needed at some specific locations.
+Note : namespacing should not be used for two UNRELATED web applications, as most resources are *shared*, ie. both applications can access
+each other's assets, which is not a good idea in general in this use case. A different folder (eg. my_site2) should be created instead.
+
+Creating the application structure
+----------------------------------
+
+A web application should have the following structure :
+[.] Site root dir
+ |
+ |_ config           | The web application config file (Recommended : chmod 0775)
+ |
+ |_ controllers      | location for controllers used by the web application
+ |
+ |_ langs            | Language files (gettext)
+ |
+ |_ layouts          | location for template files
+ |
+ |_ libs             | core php classes
+ |
+ |_ models           | location for models used by the web application
+ |
+ |_ skins            | Site resources : graphics, CSS, javascript
+ |
+ |_ views            | location for view files used by the web application
+
+Creating the server resources structure
+---------------------------------------
+
+When separated from the site structure, the server resources should be structured like the following :
+[.] Resources root dir
+ |
+ |_ cache            | cached files (if caching is enabled)   (Recommended : chmod 2775, chown www-data:www-data)
+ |
+ |_ logs             | The web application logs               (Recommended : chmod 2775, chown www-data:www-data)
+ |
+ |_ upload           | user uploaded files                    (Recommended : chmod 0775)
+
+
+Server resources and application structures can be merged if there is no need for separating them.
+If resources folder is external to the site root dir, the latter should have a symlink pointing at the former :
+[.] Site root dir
+ |
+ |_ (...)
+ |
+ |_ resources -> [Resources root dir]
+ |
+ |_ (...)
+
+It is also possible to mix symlink with physical folders inside a resources folder inside site root dir :
+[.] Site root dir
+ |
+ |_ (...)
+ |
+ |_ resources		| Resources root dir
+    |_ cache		| Cache folder (physical)
+    |_ logs			| Log folder (physical)
+    |_ upload -> [path to external upload folder]
+
+
+SETUP APPLICATION NAMESPACE(S)
+==============================
+
+About namespaces
+----------------
+
+Through this framework, every web application have at least one namespace : the application itself.
+By default, a namespace is defined as the server name the application runs onto.
+For instance, the default application namespace for http://www.my_site.com/ would be «www.my_site.com».
+Namespaces are heavily used in the framework;
+Namespaces allow a logical separation of web applications while sharing physical resources.
+How an application is namespaced and how many it has has to identified by the developer.
+
+○ Use cases :
+■ A typical 2 namespaces web application is one with front/back ends.
+Thus, http://www.my_site.com would be the front-end, and http://admin.my_site.com the back-end.
+However, the code is shared for both of them, unless one *overrides* the other.
+Note: Apache mod_rewrite is required to allow namespacing to work.
+■ An intranet must be accessed through different credentials depending on the user role :
+  - Recruiter, Interviewer, Administrator
+  Each of these could yield to 3 application namespaces, such as recruitor.my_site, itw.my_site, admin.my_site.
+  Each namespace would then provide different functionalities while keeping a global layout, sharing common features...
+    Note that while this could be used to apply simple permission control system, application namespacing does not
+    replace a user permissions engine such as ACL or Role Based Access Control.
+■ An application is deployment in a development server, staging, production server that all require different settings.
+  The config file uses application namespaces so each can use common settings while overridding whatever's needed.
+  In such a case, the application would exactly be the same for all namespaces, which would be used solely for configuration.
+
+○ Namespace overridding
+Application namespaces rely on inheritance.
+To allow different namespaces to share common resources, one must inherit another.
+For case 1 above, admin namespace would thus inherit the front namespace.
+The other way round would not work as the former probably has more features than the latter,
+and inheritance allows to override the parent's assets or add your own, but not disable.
+Note that the application namespace should *always* inherit "default" in the configuration file.
+
+When two or more namespaces are defined, the following process is done when accessing any namespaced resource.
+Knowing this allows to determine which namespace should inherit which :
+Three namespaces are defined (excl. default) :
+default
+↑
+foo
+↑
+bar
+↑
+baz
+
+When requesting resource foobar :
+■ Is resource available under namespace baz ? If YES, then use it => [END]
+■ Is resource available under namespace bar ? If YES, then use it => [END]
+■ Is resource available under namespace foo ? If YES, then use it => [END]
+■ Resource not found => [END]
+Note that the default namespace is not used during the process. It is only
+used to define top-level directories for the various resources the application
+can access. Under each of these, namespaces should be defined.
+
+Define namespaces in the web application
+----------------------------------------
+
+For each namespace the application is expected to have (more can be added anytime), a folder named after the namespace
+should be created in the following folders :
+[.] Site root dir
+ |
+ |_ config
+ |
+ |_ controllers
+ |  |_ «namespace»
+ |
+ |_ langs
+ |  |_ «namespace»
+ |
+ |_ layouts
+ |  |_ «namespace»
+ |
+ |_ libs
+ |
+ |_ models
+ |  |_ «namespace»
+ |
+ |_ skins
+ |  |_ «namespace»
+ |
+ |_ views
+    |_ «namespace»
+
+■ config/config.yaml contains the configuration for all namespaces in a single file and thus is not namespaced.
+■ libs is also shared amongo all namespaces.
+
+Folders inside resources are not namespaced using folders :
+■ Under logs/, cache/ generated files are prefixed with the application namespace.
+■ upload is not namespaced at all, and all user uploaded files are common to all namespaces.
+  For namespace specific images... the application skins folder should be used instead.
+
+
+CONFIGURING THE WEB APPLICATION
+===============================
+
+The configuration file (a sample is available in this framework's config-default folder)
+config.yaml should be created under the site root dir config/ directory.
+the namespace "default" is required, thus should always be defined; each namespace the web application
+uses should then have a top definition the same way "default" is defined in the default config.yaml.
+When a namespace inherits (or overrides) another, the overrides: «parent» config definition should be used.
+Each namespace configuration definition only need to (re)define configuration properties that are different
+(or missing) from its parent.
+
+
+CREATING THE BOOTSTRAP FILE
+===========================
+
+Each namespace should have its own bootstrap file located under the docroot folder for the application.
+htaccess (or apache vhost config) may be used to dispatch based on specific conditions which bootstrap file
+to load.
+The bootstrap could by in any language, however, a PHP one is recommended to allow easier interaction with
+this framework.
+The bootstrap only needs to do one action : call this framework's entry point, Init::main().
+It also needs to define two (or three) constants the framework assumes to be defined before init is started :
+ - DATA_DIR  [Required]    | Absolute path to the site root dir
+ - LIB_DIR   [Required]    | Absolute path to the framework root dir
+ - BOOTSTRAP_FILE [Req.]   | Bootstrap filename (aka basename(__FILE__)).
+ - NAMESPACE [Optional]    | Defaults to $_SERVER['SERVER_NAME'] if not defined : namespace to use
+                           | Namespace is mapped to the same record in the config file, as well as
+                           | namespace folders inside each site root dir folder.
+                           | Note that . and - characters are transformed : thus, namespace defined in
+                           | config.yaml, as well as all namespace folders defined should be named accordingly.
+⇛ This framework's docroot folder contains a sample PHP bootstrap named namespace.php.
+
+CREATING THE .HTACCESS FILE
+===========================
+
+Depending on where the web docroot points at (application's docroot directly or somewhere above), the content
+will be different; however, here are a few notes that should be applicable on most cases :
+■ Use mod_rewrite to reroute ALL requests targeting a specific server/domain to the php newly created bootstrap file.
+  Different namespaces should be routed to separate bootstraps (though not enforced).
+■ If site root dir is under docroot, disallow access to it : only the bootstrap can access it through PHP includes.
+■ The .htaccess file can be either in the same folder as the bootstrap files, or somewhere else.
+  the RewriteRule should match the chosen organization accordingly.
+
+
+APPLICATION READY. GOOD LUCK!
+=============================
+
+Once the system is setup and the basic installation is done, it's time to add content to the application.
+
+
+[END OF FILE]

@@ -1,0 +1,15 @@
+---
+layout: nil
+filters: compress
+---
+<?php
+    foreach ($this->params as $file => $media) {
+      $file = Utils_ResourceLocator::skinFile('/css/'.$file.'.php');
+      if (false !== $file) {
+        echo "@media $media {".PHP_EOL;
+        include($file);
+        echo "}".PHP_EOL;
+      }
+      // Ignore files not found
+    }
+?>

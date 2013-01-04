@@ -1,0 +1,16 @@
+default: # Top site configs must override this default
+  # overrides: default  # What config to override. MANDATORY for all sites
+  system: # System config
+    debug: false # true/false : debug mode enabled
+    timezone: Asia/Tokyo # Current timezone
+    locales: en_US,ja_JP # Comma separated list of ISO valid locales
+    loglevel: ERR # From 0 to 7, or one of EMERG, ALERT, CRIT, ERR, WARN, NOTICE, INFO, DEBUG (higher includes lower levels)
+    session_timeout: 3600 # In seconds, time before session times out
+    charset: UTF-8 # Default encoding used
+  directories: # Default directories used for various resources
+    resources: resources # Base directory for images, upload, script.
+    skin: skins # Directory containing skin related files (CSS, JS, graphics). Under site root dir (DATA_DIR).
+    lang: langs # Directory containing gettext (po) files for i18n text. Under site root dir (DATA_DIR).
+    upload: upload # Directory containing uploaded files/images (eg. from editor). Under resources directory. Can be symlink to external directory
+    log: logs # Directory containing log files. Under resources directory. chmod 2775. Can be symlink to external directory
+    cache: cache # Directory containing cached files. Under resources directory. chmod 2775. Can be symlink to external directory

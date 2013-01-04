@@ -1,0 +1,37 @@
+s_\\clearpage__g
+s_\\maketitle__g
+s_\\tableofcontents__g
+s_\\cleardoublepage__g
+s_\\appendix__g
+s_\\printindex__g
+s_\\linebreak\[0\]__g
+s_\\eod__g
+/\\include/d
+/\\begin{abstract}/d
+/\\end{abstract}/d
+/\\begin{unbreakable}/d
+/\\end{unbreakable}/d
+s/\\dirtree{%/\n!begindirtree!\n/g
+s/} %enddirtree/\n!enddirtree!\n/g
+/begindirtree/,/enddirtree/ {
+ s/^\(.*\)$/\n\1\n/
+}
+/treedesc/ {
+  s/\\treedesc{\(.*\)}.\n/:: \1/
+}
+s_\\uservariable{\([^}]*\)}_\\textit{\1}_g
+s_\\variable{\([^}]*\)}_\\texttt{\1}_g
+s_\\varvalue{\([^}]*\)}_\1_g
+s_\\keyword{\([^}]*\)}s_\\textit{\1s}_g
+s_\\keyword{\([^}]*\)}_\\textit{\1}_g
+s_\\classname{\([^}]*\)}_\\texttt{\1}_g
+s_\\constant{\([^}]*\)}_\\texttt{\1}_g
+s_\\filename{\([^}]*\)}_\\textit{\1}_g
+s_\\docref{\([^}]*\)}_\\textit{\1}_g
+s_\\eg_e\.g\.\ _g
+s_\\eg{}_e\.g\.\ _g
+s_\\ie_i\.e\.\ _g
+s_\\ie{}_i\.e\.\ _g
+s_\\index{\([^}]*\)}_\1_g
+s/\\begin{note}/\n!beginnote!\n/g
+s/\\end{note}/\n!endnote!\n/g

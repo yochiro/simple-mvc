@@ -1,0 +1,1626 @@
+\documentclass[pdftex,12pt,a4paper]{article}
+\renewcommand{\abstractname}{Using the framework}
+
+\include{header}
+
+\begin{document}
+
+\title{Simple MVC Framework - Developer guide}
+\author{Yoann Mikami}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+This package contains the files needed to build a web application using
+an \keyword{MVC}\footnote{(Model-View-Controller)} oriented architecture.
+
+This document aims at providing a guide on how to build a new web application,
+or maintain, understand existing ones.
+
+Please refer to \docref{Install guide} for instructions on how to create the initial development workspace.
+A plain text version, \filename{INSTALL}, is also available.
+\end{abstract}
+
+\tableofcontents
+
+\cleardoublepage
+
+\section{Getting started} \label{sec:getting-started}
+
+\subsection{Features} \label{sec:features}
+The purpose of this \keyword{MVC} framework is to stay as simple as it can possibly be.
+Thus, some advanced features that usual \keyword{MVC} framework provides are not available.
+However, it should have enough materials to build a simple web application, and also support \keyword{Ajax} requests.
+Below is an overview of the features the current framework provides :
+\begin{itemize}
+    \item PHP 5 object-oriented MVC architecture
+    \item Template-based layout using \keyword{Savant3} (\url{http://phpsavant.com}) \\ Support of \keyword{view helper}s and \keyword{view filter}s
+    \item \keyword{i18n}\footnote{Internationalization} using \keyword{gettext}
+    \item Single-point of entry provided by a \keyword{bootstrap}, request dispatch through a \keyword{front dispatcher}
+    \item Logical separation ( \keyword{namespace} ) of applications sharing physical resources
+    \item Hierarchy-based \keyword{view}s. Built-in \keyword{breadcrumb}s, navigation menu builder
+    \item Logical mapping of URIs to \emph{all} physical site resources (controllers, views, images\ldots)
+    \item Separation of static and dynamic resources to allow easy deployment and maintenance
+    \item \keyword{CSS} and \keyword{javascript} aggregation : all CSS and javascript served as a single HTTP request
+    \item \keyword{init plugin}s, \keyword{view plugin}s, \keyword{resource plugin}s
+    \item Configuration file in \keyword{YAML} format
+    \item Built-in support for \keyword{MySQL} and \keyword{MongoDB} databases
+\end{itemize}
+
+\subsection{Documentation coverage} \label{sec:documentation-coverage}
+Each class' phpdoc should give much more details on how to use them, but this document aims at
+providing generic general guidelines on how to :
+\begin{itemize}
+    \item Overview on how this framework handles requests. See page \pageref{sec:framework-request-dispatching-process}).
+    \item Create models, and how to use them. See page \pageref{sec:managing-models}.
+    \item Create a new controller. See page \pageref{sec:managing-controllers}.
+    \item Create a view, assign it a layout and store specific metadata. See page \pageref{sec:managing-views}.
+    \item Create \keyword{view helper}s, \keyword{view filter}s ( \keyword{Savant3} template engine feature). See page \pageref{sec:template-filters-and-plugins}.
+    \item Create \keyword{init plugin}s, \keyword{view plugin}s. See page \pageref{sec:plugins}.
+    \item Handle various resources. See page \pageref{sec:handling-resources}.
+\end{itemize}
+
+\section {Framework basics} \label{sec:framework-basics}
+\subsection{Framework structure} \label{sec:framework-structure}
+The framework should have the following structure :
+\begin{unbreakable}
+\dirtree{%
+.1 \constant{LIB\_DIR} \treedesc{(current directory).}.
+.2 config-default
+	\treedesc{sample \keyword{configuration file}. Configuration is detailed in the \nameref{sec:configuration} appendix.}.
+.2 controllers
+	\treedesc{location for controllers used by the framework.}.
+.2 doc
+	\treedesc{The documentation in \LaTeX{} format.}.
+.2 docroot
+	\treedesc{Contains a sample \keyword{bootstrap} PHP file (see \docref{Install guide}).}.
+.2 INSTALL
+	\treedesc{\docref{Installation instructions} (plain text) : should be read first.}.
+.2 layouts
+	\treedesc{location for template files.}.
+.2 libs
+	\treedesc{core PHP classes.}.
+.3 [ \emph{see below} ].
+.2 opt
+	\treedesc{3rd party dependencies packages.}.
+.2 README.md
+	\treedesc{The Markdown file generated from the \LaTeX{} documentation.}.
+.2 views
+	\treedesc{location for view files used by the framework.}.
+} %enddirtree
+\end{unbreakable}
+
+\begin{note}
+\begin{itemize}
+    \item The structure is very similar to the web application structure described in the \docref{Install guide} document.
+    \item Framework currently supplies the following controllers :
+    \begin{itemize}
+        \item \variable{stylesheets} \hfill (manages stylesheets to be loaded in web pages)
+        \item \variable{scripts} \hfill (manages scripts/files to be included in web pages)
+    \end{itemize}
+    As well as their associated views in the \filename{views} folder.
+    \item  There is currently a single layout provided : \filename{nil.phtml}: only renders the view content.
+    It is used by both stylesheets and scripts views.
+    \item \filename{libs} contains the core files of the framework. All the framework features are provided by the classes defined in this folder.
+\end{itemize}
+\end{note}
+
+\subsection{Library structure} \label{sec:library-structure}
+The \filename{libs} folder has the following structure (some files are omitted) :
+\begin{unbreakable}
+\dirtree{%
+.1 libs.
+.2 interface
+	\treedesc{\classname{Iface\_XXX} \keyword{interface}s.}.
+.2 mvc
+	\treedesc{Default implementation of \keyword{MVC} \keyword{interface}s.}.
+.2 plugins
+	\treedesc{init and view plugins.}.
+.3 Init
+	\treedesc{\classname{Plugin\_Init\_XXX} \keyword{plugin}s : plugins executed before request is processed.}.
+.3 View
+	\treedesc{\classname{Plugin\_View\_XXX} \keyword{plugin}s : plugins executed before view is rendered.}.
+.3 Resource
+	\treedesc{\classname{Plugin\_Resource\_XXX} \keyword{plugin}s : plugins executed before a resource (image, file...) is output.}.
+.2 savant3.
+.3 Savant3.
+.4 resources
+	\treedesc{\keyword{Savant3} resources : \classname{Savant3\_Filter\_XXX} filters and \classname{Savant3\_Plugin\_XXX} \keyword{plugin}s (available during view rendering).}.
+.2 utils
+	\treedesc{Various utility classes.}.
+.2 Init.php
+	\treedesc{Application single entry-point.}.
+.2 MVC.php
+	\treedesc{Abstract factory to manage MVC core classes instances.}.
+.2 Utils.php
+	\treedesc{Handy functions not available in PHP.}.
+} %enddirtree
+\end{unbreakable}
+
+\subsection{Framework request dispatching process} \label{sec:framework-request-dispatching-process}
+
+This section will assume that the application is a web application accessed through a web browser. \\
+It is also assumed that it has two \keyword{namespace}s : \varvalue{front} and \varvalue{admin}. \\
+The application is accessed through \filename{www.mysite.com} for the front side, and \filename{admin.mysite.com} for the admin side.
+
+The request dispatching process will be explained assuming the above. Application setup follows folder organization described in \docref{Install guide}. It is split into four subfolders under the \keyword{webroot} (\eg httpdocs) :
+\begin{itemize}
+    \item mysite\_docroot
+    \item mysite\_lib
+    \item mysite\_resources
+    \item mysite\_site
+\end{itemize}
+
+\filename{mysite\_lib} contains this framework. \filename{mysite\_site} contains all the web application files. \filename{mysite\_resources} has \filename{logs}, \filename{cache}, \filename{upload} resources folders.
+Finally, \filename{mysite\_docroot} contains the two \keyword{bootstrap}s for both \keyword{namespace}s.
+If apache configuration is available, then the \keyword{VirtualHost} configuration can set the \variable{docroot} for both \filename{www.mysite.com} and \filename{admin.mysite.com} to \varvalue{mysite\_docroot}. It will contain both \keyword{bootstrap} files and \filename{.htaccess}.
+On shared servers where server configuration is limited, an \filename{.htaccess} file can be placed under the \keyword{webroot}; its content would be similar, \keyword{bootstrap} files location excluded.
+
+\subsubsection{Apache virtual host / .htaccess URL rewriting}
+
+Apache is responsible for redirecting the incoming request based on the URL to the proper \keyword{bootstrap}.
+Here, the front top page is requested so configuration in the \keyword{VirtualHost} section of \keyword{Apache} config, or the \filename{.htaccess} in the docroot under the \uservariable{site root dir} do the trick. (This documentation leaves out the details on how to configure \keyword{VirtualHost} for \keyword{Apache} ).
+If \filename{.htaccess} is located under the \uservariable{site root dir}, it will look like the following :
+\begin{lstlisting}[label=htaccess-sample,caption=.htaccess sample using mod\_rewrite]
+RewriteEngine On
+
+RewriteCond %{SERVER_NAME} ^www\.mysite\.com
+RewriteCond %{REQUEST_URI} !www\.mysite\.com\.php
+RewriteRule ^(.*)$ www.mysite.com.php/$1 [L]
+
+RewriteCond %{SERVER_NAME} ^admin\.mysite\.com
+RewriteCond %{REQUEST_URI} !admin\.mysite\.com\.php
+RewriteRule ^(.*)$ admin.mysite.com.php/$1 [L]
+\end{lstlisting}
+
+Should the \filename{.htaccess} be located under webroot instead, the lines
+\begin{lstlisting}
+RewriteRule ^(.*)$ www.mysite.com.php/$1 [L]
+
+RewriteRule ^(.*)$ admin.mysite.com.php/$1 [L]
+\end{lstlisting}
+would become
+\begin{lstlisting}
+RewriteRule ^(.*)$ mysite\_docroot/www.mysite.com.php/$1 [L]
+
+RewriteRule ^(.*)$ mysite\_docroot/admin.mysite.com.php/$1 [L]
+\end{lstlisting}
+
+The key is to use \keyword{mod\_rewrite} so that any incoming request on server name \filename{www.mysite.com} $|$ \filename{admin.mysite.com} should be redirected to their respective PHP \keyword{bootstrap} file.
+The initial request URI is appended to it so the URI \filename{/foo/bar/} would be rewritten as resp. \filename{www.mysite.com.php/foo/bar} and \filename{admin.mysite.com.php/foo/bar}.\\
+\begin{note}
+\keyword{bootstrap} filenames are arbitrary : they could be named whatever they want. However, should it be different than the \constant{SERVER\_NAME} value, the constant \constant{NAMESPACE} will need to be defined with a value matching the base URL.
+The constant can be defined either in the \keyword{bootstrap} file, or in a \classname{PreRun} plugin (See \nameref{sec:prerun-init}). Anyhow, it should be defined when \snippet{Init::run()} is called.
+\end{note}
+
+\subsubsection{bootstrapping}
+
+The \keyword{bootstrap} file is a small script that merely calls the framework initialization class. It also defines some required constants assumed to be valid in the framework.
+The first two mandatory constants are \constant{DATA\_DIR} and \constant{LIB\_DIR}: the former should be the server absolute path to the \uservariable{site root dir} while the latter should be the absolute path to the \uservariable{framework root dir}. The script should end by including \filename{LIB\_DIR/libs/Init.php} and executing \snippet{Init::main()}.
+
+In this case, \filename{www.mysite.com.php} will have the following :
+\begin{lstlisting}[label=bootstrap-code,caption=Bootstrap code sample,language=PHP]
+define ('DATA_DIR', realpath($_SERVER['DOCUMENT_ROOT'] . '../mysite_site/') . '/');
+define ('LIB_DIR' , realpath($_SERVER['DOCUMENT_ROOT'] . '/../mysite_lib/') . '/');
+define ('BOOTSTRAP_FILE', basename(__FILE__)); // contains www.mysite.com.php
+include (LIB_DIR . 'libs/Init.php');
+Init::main();
+\end{lstlisting}
+If \constant{DOCUMENT\_ROOT} points to \varvalue{mysite\_docroot}; otherwise, \varvalue{../mysite\_site} and \varvalue{../mysite\_lib} should be replaced with \varvalue{/mysite\_site} and \varvalue{mysite\_lib}.
+
+The third required constant, namely \constant{BOOTSTRAP\_FILE}, should contain the filename of the script used as a bootstrap file. the PHP magic constants \_\_FILE\_\_ contains this the full path to the current filename, so it can be used for that matter like above, using \snippet{basename}.
+
+Optionally, \constant{NAMESPACE} can be supplied, which will define the default value assigned to the application \keyword{namespace} during the initialization. (See below).\\
+When not user-defined, the \constant{NAMESPACE} defaults to the URI server name (\snippet{\$\_SERVER['SERVER\_NAME']} value). If the \keyword{namespace} name differs from the latter, it should be defined by the user before calling the \keyword{bootstrap} init.
+
+The following line would be needed if while the server name is \filename{www.mysite.com.php}, the namespace used in the config was \varvalue{mysite\_ns} :
+\begin{lstlisting}[language=PHP]
+define ('NAMESPACE', 'mysite_ns');
+\end{lstlisting}
+
+From now on, the framework takes charge of the request processing and starts initializing itself.\\
+Static call \snippet{Init::main()} instantiates a new \classname{Init} class, runs any \keyword{pre-run} object if available, then runs \snippet{\$init->run()} on itself.
+
+\subsubsection{Pre-run object} \label{sec:prerun-init}
+Before \snippet{\$init->run()} is called, \snippet{Init::main()} calls \snippet{\$init->preRun()}; \\
+This method will look for a specific classname, namely \classname{Plugin\_PreRun} in the current realm of the autoloader (check \classname{Init} header documentation for the included paths). \\
+If such a class exists, and it defines the \classname{Iface\_PreRun} interface, it is instantiated then its \snippet{process()} method is ran. \\
+Any pre-initialization stuff can be done in this class. However, note that no application specific data is available yet, such as configuration, locale\ldots; thus, application config. dependent code should not be placed there. It can be useful to define required constant \constant{NAMESPACE}, \constant{BOOTSTRAP\_FILE}\ldots based on specific server-side conditions. \\
+For instance, the a third-party library such as \keyword{WURFL} could be used to perform user agent detection of mobile VS PC browsers, and define the \constant{NAMESPACE} constant accordingly.
+
+If no \keyword{pre-run} action was found, or after it has completed, the actual initialization can be performed.
+
+\subsubsection{Run Init}
+The \classname{Init} class is the entry point for all requests. It performs the following initializations before processing the request :
+\begin{itemize}
+    \item Extract request namespace : If not supplied as a \constant{NAMESPACE} constant, defaults to \snippet{\$\_SERVER['SERVER\_NAME']} : In this case, it will be \varvalue{www.mysite.com}.
+    \item Starts an internal timer : Can be used to time the request processing time.
+    \item Loads application config : \filename{config.yaml}, located under \filename{DATA\_DIR/config}. \\
+It reads the configuration values assigned to the current namespace, aka \varvalue{www.mysite.com}, so \filename{config.yaml} should have a section with the specified name. It should also extend the `default' \keyword{namespace}. \\
+The configuration for \keyword{namespace} \varvalue{www\_mysite\_com} is the following : (Refer to the \nameref{sec:configuration} appendix for configuration values) :
+
+\begin{lstlisting}
+default:
+  system:
+    debug: false
+    timezone: Asia/Tokyo
+    locales: en_US,ja_JP
+    loglevel: ERR
+    plugins:
+      init:
+        - A
+        - B
+      view:
+        - C
+        - D
+  directories:
+    resources:
+    skin: skins
+    lang: langs
+    upload: upload
+    log: logs
+    cache: cache
+
+www_mysite_com:
+  overrides: default
+  system:
+    debug: true
+    locales: ja_JP
+    loglevel: DEBUG
+\end{lstlisting}
+
+\begin{note}
+The \keyword{namespace} defined in the configuration file should be the namespace determined above with . (dot) and - (hyphen) transformed into \_ (underbar). This is due to the \keyword{YAML} format which do not accept these two characters as a property key definition.
+\end{note}
+
+    \item Sets debug flag : flag can be turned on/off in the configuration, for each \keyword{namespace}. Outputs additional debug information in error pages (such as exception stack trace).
+    \item Inits resources : from the configuration, all resource folders values are retrieved and set to the \classname{Utils\_ResourceLocator} static class : it is responsible to map all application URLs to physical resources on the filesystem.
+    \item Inits timezone : configurable in the configuration file.
+    \item Inits request : \keyword{init plugin}s are processed at this stage. See \nameref{sec:init-plugins} chapter, or section below. Doing this early allows \keyword{plugin}s to perform preprocessing on locales, translation files... \ie{} anything init after this point.
+    \item Inits locale : configurable in the configuration file. Initial locale defaults to whatever the browser settings are.
+    \item Inits translation file : \keyword{gettext} \uservariable{curr\_locale}.mo file is expected to be found in the folder pointed by the \variable{langs} property in the configuration file. \\
+    It is namespaced, so in this case the class will look for \\
+    \filename{mysite\_site/langs/www\_mysite\_com/ja\_JP.mo}.
+    \item Inits log file : the \variable{log} folder should be writable by the apache user/group (usually \varvalue{www-data} or \varvalue{apache}). \\
+    The file \filename{mysite\_resources/logs/www\_mysite\_com.log} will be created if such file does not exist yet, or the current one will be updated. All log write requests from that point will now be directed to that file, based on the log level also configured in the configuration file.
+\end{itemize}
+If all previous steps succeed, then the request is parsed. Should a step fail, the init script ends with an ``Init error'' message sent back to the browser.
+
+\subsubsection{Run init plugins (init request)}
+
+\keyword{Init plugin}s are ran in the order they are declared in the configuration file. That is, in this example, plugin A is processed then B. \\
+\keyword{Init plugin}s allows an application to plug functionality and/or initialization routines not supplied in the \classname{Init}. This framework supplies 3 \keyword{init plugin}s that can be enabled as needed :
+\begin{description}
+	\item[mysql] Provides a connection to a MySQL database given the connection properties specified in the configuration file. See page \pageref{sec:mysql-init-plugin}
+	\item[mongoDB] Provides a connection to a MongoDB database given the connection properties specified in the configuration file. See page \pageref{sec:mongodb-init-plugin}
+	\item[session] Provides a session object (\classname{Zend\_Session}), with an optional session timeout that can be defined in the configuration file. See page \pageref{sec:session-init-plugin}
+\end{description}
+
+An application can provide its own \keyword{plugin}s easily;\\
+They need to be located under \filename{<site root dir>/libs/plugins/Init/}. The process to do so is detailed in page \pageref{sec:init-plugins}.
+
+An \keyword{init plugin} is passed the site configuration, so it can defines its own configuration properties to be set in it. It can also set new parameters in the global \keyword{registry}.
+
+\subsubsection{Parse request}
+
+Request to be dispatched is extracted from the \snippet{\$\_SERVER['PHP\_SELF']} value : it should contain the \keyword{bootstrap} filename, previously defined through the constant \constant{BOOTSTRAP\_FILE}, followed by a '/' and the request.
+
+In this case \constant{PHP\_SELF} value should be\varvalue{/www.mysite.com.php/'}, as the top page is requested. After extraction, the original request ('/') is retrieved. \\
+An error is shown and the process is ended if the namespace cannot be found in \constant{PHP\_SELF} value.
+
+\subsubsection{Handle static resources}
+
+The process checks whether current request is a static resource. If it is, then it is served using the proper \variable{mimetype} and ends; \ie if request is a static resource, the \keyword{front dispatcher} is not called and no view will be rendered. See \nameref{sec:handling-resources}.
+
+\subsubsection{Request dispatch to controllers}
+
+If resource was not a static resource, as it is the case for this example (top page), the actual dispatch processing is delegated to the \keyword{front dispatcher}.
+
+The \keyword{front dispatcher} is a singleton class, namely \classname{FrontDispatcher}, part of the \keyword{SimpleMVC}. It is responsible for mapping a (non static resource) request to a controller class and dispatch the request to it if found.
+\begin{note}
+	This explicit use of \classname{FrontController} (detailed page \pageref{sec:frontdispatcher-dispatch-request} makes a heavy dependency between the framework core and the \keyword{SimpleMVC} package. A future version may address this, by making a \keyword{front dispatcher} interface which would be implemented by the former, and add the dispatcher instance retrieval method to the \classname{MVC} class. Refer to \nameref{sec:managing-mvc-classes} regarding the \keyword{MVC} package.
+\end{note}
+
+For each applicable \keyword{controller} found (if any), the request is passed. The following 4 base cases can happen :
+\begin{itemize}
+	\item An \keyword{internal redirection} is requested during the \keyword{controller} process.
+	\item An external redirect is performed within the \keyword{controller}.
+	\item An exception is raised during the \keyword{controller} process.
+	\item The \keyword{controller} ends normally. The \keyword{view} to render should be set.
+\end{itemize}
+
+For the first case, a new dispatch call is made to the \keyword{front dispatcher} again, to parse the designated new request. This process is repeated as long as the controller(s) processed request for internal redirects, potentially leading to \emph{infinite loops}. \\
+For the second case, the controller will never actually return and the redirection will be executed at once. The \keyword{front dispatcher} does not take the reins back. \\
+For the third case, a ``404 error view'' will be requested for display if exception raised is a \classname{PageNotFoundException}. If \classname{RequestException}, a ``request error view'' will be rendered. Otherwise, an init error message will be shown to the user (no view rendered).
+For the last case, the \keyword{view} set within the \keyword{controller} is retrieved and is set for render, if it exists.
+
+Before view is rendered, \keyword{view plugin}s are executed. They are passed the view object, and can perform pre-rendering operations.
+
+\subsubsection{Run view plugins}
+
+\keyword{View plugin}s are then ran in the order they are declared in the configuration file. That is, in this example, plugin C is processed then D. \\
+\keyword{View plugin}s allows an application to perform pre-rendering routines that uses \keyword{view metadata} . This framework does not supply any \keyword{view plugin}s.\\
+
+An application can provide its own plugins easily;\\
+They need to be located under \filename{<site root dir>/libs/plugins/View/}. The process to do so is detailed in page \pageref{sec:view-plugins}.
+
+\subsubsection{Render the view}
+
+The last step in the framework request dispatching process is to render the view associated with current request. By default, the view \keyword{canonical name} is the same as the controller's, but the latter can set it if needed.
+
+The request dispatching process is then over.
+
+
+
+\section{Introduction to the SimpleMVC framework} \label{sec:introduction-to-the-simplemvc-framework}
+
+SimpleMVC is as its name implies, a simple MVC framework used by this framework.
+Its architecture is simple on purpose, and does not define a complex class hierarchy.
+Instead, it defines three main interfaces :
+\begin{itemize}
+    \item \classname{Iface\_Model}
+    \item \classname{Iface\_View}
+    \item \classname{Iface\_Controller}
+\end{itemize}
+and the corresponding class implementations :
+\begin{itemize}
+    \item \classname{SimpleMysqlModel} $|$ \classname{SimpleMongoDBModel}
+    \item \classname{SimpleView}
+    \item \classname{SimpleController} $|$ \classname{AjaxController}
+\end{itemize}
+There is currently no additional abstraction layer between the database and the models, to keep
+it simple. Thus, two distinct model classes are supplied for two databases : \keyword{MySQL} and \keyword{MongoDB}.
+Similarily, \classname{AjaxController} subclasses \classname{SimpleController} and adds support for \keyword{XMLHTTPRequest}s.
+
+In addition, \classname{Layout} is the templating engine rendering class, used by \classname{SimpleView} for rendering. \\
+\classname{FrontDispatcher} dispatches the request to the appropriate controller if any, then can render the resulting view.
+
+Finally, the factory class \classname{SimpleMVCFactory} manages all M,V,C classes and glues \keyword{SimpleMVC} to the \classname{MVC} static class. \\
+It implements the \classname{Iface\_MVC} interface.
+
+\classname{MVC} is the main class to be used by applications to instantiate models, views, controllers objects. \\
+It implements an \keyword{abstract factory} pattern, currently limited to \keyword{SimpleMVC} support.
+
+\subsection{Notes to developers} \label{sec:notes-to-developers}
+
+All classes (not limited to \keyword{SimpleMVC}) use an \keyword{NVI}\footnote{Non Virtual Interface} approach in their API : all public methods are declared \snippet{final}, and delegate the process to a \snippet{protected} method \snippet{doXxx}, \snippet{xxx} being the public method name.
+
+When subclassing \keyword{SimpleMVC} classes such as models or controllers, only the \snippet{doXXX} methods can thus be overridden/implemented.
+
+\subsection{Managing MVC classes} \label{sec:managing-mvc-classes}
+
+Any instantiation can be done through the \classname{MVC} static class, like the following :
+\begin{lstlisting}[label=mvc-class-code,caption=Retrieving MVC classes,language=PHP]
+$m = MVC::model('/my/model/name/');
+$v = MVC::view('/my/view/name/');
+$c = MVC::controller('/my/controller/name/');
+\end{lstlisting}
+
+Each parameter is a \keyword{canonical name} to a view, model or controller.
+This name is mapped by the factory to an actual file/classname based on a set of rules. \\
+These differ for M, V, and C, but they commonly depend on on application \keyword{namespace}s.
+
+View, model or controller files need to be located to whatever the canonical name, once resolved, would point at. \\
+\keyword{SimpleMVC} resolving rules are explained later in this document.
+
+Except for models which are usually used in controllers, views and controllers should rarely be instantiated by the application developer.
+\classname{FrontDispatcher} is in charge of instantiating controllers and views, while \classname{SimpleView} instances can instantiate other view instances.
+
+\subsection{FrontDispatcher} \label{sec:frontdispatcher-dispatch-request}
+
+\classname{FrontDispatcher} is a \keyword{singleton} serving as an entry-point to request dispatching. It instantiates \keyword{controller}s whose \keyword{canonical name}s match the current request and delegates the dispatching process to each of them.
+
+\subsubsection{Canonical name to controller instance mapping} \label{sec:canonical-name-to-controller-instance-mapping}
+
+The base directories for controllers are given by \snippet{Utils\_ResourceLocator::controllerDirs()}. One is returned for each defined \keyword{namespace}, and for both the \uservariable{site root dir} and \uservariable{framework root dir} (the latter does not define \keyword{namespace}s).
+
+Given the application structure defined in \nameref{sec:framework-request-dispatching-process} section, the following mapping will be performed, in this order, if \filename{admin.mysite.com/foo/bar/} is requested :
+
+Request value is parsed to produce (alphanumeric string, list of values) pair(s) :
+\begin{itemize}
+	\item `/' yields (``'', empty list) (\ie empty string)
+	\item `/foo/' yields (``foo'', empty list)
+	\item `/foo/bar' yields (``foobar'', empty list) and (``foo'', list(``bar''))
+	\item \ldots
+\end{itemize}
+
+\begin{note}
+	This first (filtered, stripped of non alnum characters) value becomes both the controller canonical name to look for and the default view canonical name to render at the end of the process. \\
+	The second value (the list) can be request parameters when using \keyword{SEO friendly URL}s. More on this in the section (\nameref{sec:get-the-request-controller}). \\
+	Thus, `/foo\%~/bar/baz' would yield (``foobarbaz'', empty list) and (``foo'', list(``bar'', ``baz'')).
+\end{note}
+
+The \keyword{controller} classname is also deducted from the filtered value and becomes :
+\begin{itemize}
+	\item N/A (no controller assigned for the empty string)
+	\item \classname{\varvalue{Foo}Controller}
+	\item \classname{\varvalue{Foobar}Controller} and \classname{\varvalue{Foo}Controller}
+\end{itemize}
+The rule is \snippet{ucfirst(\$filtered).'Controller'}.
+
+\begin{center}
+\begin{unbreakable}
+{\scriptsize
+\begin{verbatim}
+	----------------------------------      --------------------------------------------------------------
+	| namespace : <admin.mysite.com> | ---> | location : <<site root dir>>/controllers/admin.mysite.com/ |
+	----------------------------------      --------------------------------------------------------------
+	              ||
+	              \/
+	--------------------------------        ------------------------------------------------------------
+	| namespace : <www.mysite.com> | -----> | location : <<site root dir>>/controllers/www.mysite.com/ |
+	--------------------------------        ------------------------------------------------------------
+	              ||
+	              \/
+	--------------------------------        --------------------------------------------------
+	|    Framework controllers     | -----> | location : <<framework root dir>>/controllers/ |
+	--------------------------------        --------------------------------------------------
+\end{verbatim}
+}
+\end{unbreakable}
+\end{center}
+\begin{note}
+`-' characters in the namespace are replaced by `\_', so the namespaced folders should be named accordingly.
+\end{note}
+
+For each of the folders generated above, generated controller name \varvalue{'foobar'} will be appended :
+\begin{itemize}
+	\item \filename{<site root dir>/controllers/admin.mysite.com/foobar/}
+	\item \filename{<site root dir>/controllers/www.mysite.com/foobar/}
+	\item \filename{<framework root dir>/controllers/foobar/}
+\end{itemize}
+
+For each of the folders above, \classname{FoobarController.php} is looked up until such a file is found :
+\begin{itemize}
+	\item \filename{<site root dir>/controllers/admin.mysite.com/foobar/FoobarController.php}
+	\item \filename{<site root dir>/controllers/www.mysite.com/foobar/FoobarController.php}
+	\item \filename{<framework root dir>/controllers/foobar/FoobarController.php}
+\end{itemize}
+
+Found file should contain the PHP class definition of \classname{FoobarController}, which should implement \classname{Iface\_SimpleController}.\\
+This whole lookup process above (except the request name filtering) is performed through the single call : \snippet{MVC::controller('foobar')}.
+
+\subsubsection{Get the ``default'' controller} \label{sec:get-the-default-controller}
+
+For every request, the \keyword{front dispatcher} will always look for a ``default'' (canonical name) controller first. Each \keyword{namespace} can define one ``default'' keyword{controller}, and if found, will be processed first. Inheritance also applies so if \keyword{namespace} \varvalue{www.mysite.com} defines a ``default'' \keyword{controller}, \varvalue{admin.mysite.com} will also use it unless it has its own.\\
+Such controller can be useful to perform operations available to all application pages globally.
+
+The default controller location follows the same rules as the above. Thus the following folders are looked for a \classname{DefaultController} class in this order :
+\begin{itemize}
+	\item \filename{<site root dir>/controllers/admin.mysite.com/default/}
+	\item \filename{<site root dir>/controllers/www.mysite.com/default/}
+	\item \filename{<framework root dir>/controllers/default/}
+\end{itemize}
+\begin{note}
+	This framework does not provide a default controller, thus the third lookup will always return nothing.
+\end{note}
+
+The ``default'' \keyword{controller} is not mandatory : if not defined in any \keyword{namespace}, the dispatcher will continue anyway.
+
+\subsubsection{Get the request controller(s)} \label{sec:get-the-request-controller}
+
+The next controller candidate that is looked for is the current request, defining its \keyword{canonical name}; if found, then it is executed after the ``default'' if any.
+The current request controller can be either, or both of the following :
+\begin{itemize}
+	\item Full filtered request, no request parameter extracted from URL $\implies$ \classname{FoobarController} defined under \filename{<any controller dir>/foobar}.
+	\item First part of filtered request, the rest being treated as request parameters, assuming a so-called \keyword{SEO-friendly URL}.\\
+	$\implies$ \classname{FooController} defined under \filename{<any controller dir>/foo}, with the list of parameters \snippet{[bar]} stored.
+\end{itemize}
+Both, either or none of these controller may be found; in case of none, no controller is assigned to current request, and the dispatch process ends at this point (the view is rendered as is). In case of both, more specific controller (FooBar) is always processed before the other one (Foo).
+Having several controllers stacked up may be useful in somes cases when a generic action has to be performed in every page and avoid code duplication. When dealing with several namespaces, a controller can be defined for request /a/* (\classname{AController}) in namespace foo then another controller in namespace bar could be defined for the specific request /a/b/ (\classname{ABController}, to add some specific behavior in this particular case.
+\begin{note}
+\classname{ABController} will always be performed first, so it has its limitations (\eg code in \classname{AController} must be performed \emph{first}). Also, overlapping can be troublesome if internal redirects are set in \classname{ABController} as \classname{AController} would end up not being performed at all! (Similarily with the default controller, which is ran before any other one).
+\end{note}
+
+\subsubsection{Dispatch requests to controllers} \label{sec:dispatch-requests-to-controllers}
+
+Default view \keyword{canonical name} is first set on the new controller instance, \ie the filtered request value. Then the \classname{SimpleController} main entry point for dispatching is the function \snippet{dispatch} is called : it returns itself upon return (fluent interface). \\
+The view to render, if changed during dispatch, is retrieved using \snippet{view()}.\\
+The function \snippet{isForward()} tells whether current request should perform an internal redirect; if so, then \snippet{FrontDispatcher::dispatchRequest()} is called again with the retrieved view name as the new request. This process is reiterated while internal redirects are set.
+\begin{note}
+If a redirect is requested by current controller, it overrides any controller waiting to be processed after the current one; \eg{} ``default'', then ``foo'' controllers are pushed into the stack but ``default'' asks for a redirect. When defining controllers, programmer should be careful with overlapping values and redirections. Some code expected to run in some later controller may not eventually due to some internal redirect!! Refer to note in \nameref{sec:get-the-request-controller} section.
+\end{note}
+For each controller instance, a \snippet{requestParams} instance variable is set with the extracted (default empty) values from the URL. The controller may then use them to perform what is needed based on those values.
+
+\subsubsection{Canonical name to view instance mapping} \label{sec:canonical-name-to-view-instance-mapping}
+
+Once dispatching is over, and before return, the \keyword{front dispatcher} tries to instantiate the \keyword{view} (whose \keyword{canonical name} defaults to the \keyword{controller} \keyword{canonical name} if no controller set it or no controller was processed) related to current request.
+
+The base directories for views are given by \snippet{Utils\_ResourceLocator::viewDirs()}. One is returned for each defined \keyword{namespace}, and for both the \uservariable{site root dir} and \uservariable{framework root dir} (the latter does not define \keyword{namespace}s).
+
+\keyword{SimpleMVC} implementation also prepends two additional directories before this list, for \keyword{static view file}s.\\
+Those \keyword{static view file}s should contain views shared across all application \keyword{namespace}s, usually \eg 404 page not found error page\ldots.
+
+The following assumes the controller named `\varvalue{foobar}' above was found and changed the default view name from \varvalue{foobar} to \varvalue{barbaz}.
+
+\begin{center}
+\begin{unbreakable}
+{\scriptsize
+\begin{verbatim}
+	----------------------------           ----------------------------------------------
+	| Application static views | --------> | location : <<site root dir>>/views/static/ |
+	----------------------------           ----------------------------------------------
+	             ||
+	             \/
+	--------------------------             ---------------------------------------------------
+	| Framework static views | ----------> | location : <<framework root dir>>/views/static/ |
+	--------------------------             ---------------------------------------------------
+	             ||
+	             \/
+	----------------------------------     --------------------------------------------------------
+	| namespace : <admin.mysite.com> | --> | location : <<site root dir>>/views/admin.mysite.com/ |
+	----------------------------------     --------------------------------------------------------
+	             ||
+	             \/
+	--------------------------------       ------------------------------------------------------
+	| namespace : <www.mysite.com> | ----> | location : <<site root dir>>/views/www.mysite.com/ |
+	--------------------------------       ------------------------------------------------------
+	             ||
+	             \/
+	--------------------------             --------------------------------------------
+	|    Framework views     | ----------> | location : <<framework root dir>>/views/ |
+	--------------------------             --------------------------------------------
+\end{verbatim}
+}
+\end{unbreakable}
+\end{center}
+\begin{note}
+`-' characters in the namespace are replaced by `\_', so the namespaced folders should be named accordingly.
+\end{note}
+
+For each of the folders above, \filename{barbaz.phtml} is looked up until such a file is found :
+\begin{itemize}
+	\item \filename{<site root dir>/views/static/barbaz.phtml}
+	\item \filename{<framework root dir>/views/static/barbaz.phtml}
+	\item \filename{<site root dir>/views/admin.mysite.com/barbaz.phtml}
+	\item \filename{<site root dir>/views/www.mysite.com/barbaz.phtml}
+	\item \filename{<framework root dir>/views/barbaz.phtml}
+\end{itemize}
+
+This whole lookup process above is performed through the single call : \snippet{MVC::view('barbaz')}.
+\begin{note}
+While a controller not found does not produce an error, should view \filename{barbaz.phtml} be not found in any of the paths above,
+a \classname{PageNotFoundException} will be raised, which is processed by the function \snippet{Init::parseRequest} : the view named \varvalue{'404'} will then be rendered. Should that fail again (\eg no such view available either), a plain text error message will be rendered.
+\end{note}
+
+
+\subsection{Managing Models} \label{sec:managing-models}
+
+\subsubsection{Canonical name to model instance mapping} \label{sec:canonical-name-to-model-instance-mapping}
+
+The base directories for models are given by \snippet{Utils\_ResourceLocator::modelDirs()}. One is returned for each defined \keyword{namespace} under \uservariable{site root dir}.
+
+Contrary to views and controllers, models do not define a hierarchy, so model folders are flat.
+
+Given the application structure defined in \nameref{sec:framework-request-dispatching-process} section, the following mapping will be performed, in this order, if model named 'foobar' is requested :
+
+The \keyword{controller} classname is deduced from this value and is \classname{Model\_\varvalue{Foobar}}. The rule is
+\snippet{'Model\_'.ucfirst(\$filtered)}.
+
+\begin{center}
+\begin{unbreakable}
+{\scriptsize
+\begin{verbatim}
+	----------------------------------     ---------------------------------------------------------
+	| namespace : <admin.mysite.com> | --> | location : <<site root dir>>/models/admin.mysite.com/ |
+	----------------------------------     ---------------------------------------------------------
+	             ||
+	             \/
+	--------------------------------       -------------------------------------------------------
+	| namespace : <www.mysite.com> | ----> | location : <<site root dir>>/models/www.mysite.com/ |
+	--------------------------------       -------------------------------------------------------
+\end{verbatim}
+}
+\end{unbreakable}
+\end{center}
+\begin{note}
+`-' characters in the namespace are replaced by `\_', so the namespaced folders should be named accordingly.\\
+The framework does not define models, which is a very application specific concept. Thus, it does not even look under the \uservariable{framework root dir} for models.
+\end{note}
+
+For each of the folders above, \filename{Foobar.php} is looked up until such a file is found :
+\begin{itemize}
+	\item \filename{<site root dir>/models/admin.mysite.com/Foobar.php}
+	\item \filename{<site root dir>/models/www.mysite.com/Foobar.php}
+\end{itemize}
+
+Note that the ``Model\_'' is not part of the filename: it is auto-appended in the \classname{Init} class by using \classname{Zend\_Autoloader}.
+Found file however should contain the PHP class definition of \classname{Model\_Foobar}, which should implement \classname{Iface\_SimpleModel}.\\
+The model class can also extend one of the two supplied models implementing \classname{Iface\_SimpleModel} in SimpleMVC : \classname{SimpleMysqlModel} or \classname{SimpleMongoDBModel}, if connectivity to either database is required.
+This whole lookup process above (except the request name filtering) is performed through the single call : \snippet{MVC::model('foobar')}.
+
+\subsubsection{Creating a model} \label{sec:creating-a-model}
+
+As stated before, there are two ways to create a new model :
+
+\paragraph{Implement Iface\_Model}
+
+\classname{Iface\_Model} defines the basic \keyword{CRUD}\footnote{Create-Read-Update-Delete : the four basic operations on objects} methods to be implemented.\\
+Some methods require a valid instance (\ie \snippet{\$this} must refer to an actual record in the system) while some can work on any instance of the model object. Such methods return a valid instance.
+
+Model properties may be defined the way the developer wants: getter/setter method, through magic methods (\snippet{\_\_get/\_\_set}) method, or plain public class variables: the interface does not enforce this.\\
+\classname{SimpleMysqlModel} and \classname{SimpleMongoDBModel} use the latter approach.
+
+The model class should be named ``Model\_MyModelName''; its canonical name will then be `\varvalue{mymodelname}', and can be instantiated with \snippet{MVC::model('mymodelname')}.\\
+The file should be located in one of the model folders as previously detailed.
+
+\begin{itemize}
+	\item \snippet{insert(\$data, \$options=null)} \hfill \\
+	Inserts a new entry using data \snippet{\$data} and using \snippet{\$options}. Fluent interface, so should return \snippet{\$this}. \\
+	Can be called on any \snippet{\$this} instance; the latter is expected to be mutated by this method so that inserted data are accessible through the object after the call.
+	\item \snippet{update(\$data, \$options=null)} \hfill \\
+	Updates (\snippet{\$this}) record with data from \snippet{\$data} and using \snippet{\$options}. Fluent interface, so should return \snippet{\$this}. \\
+	Can be called on \emph{valid} \snippet{\$this} instances only. \snippet{\$this} is expected to be mutated by this method so that updated data are accessible through the object after the call.
+	\item \snippet{remove(\$crits=array(), \$options=null)} \hfill \\
+	Removes record(s) matching criteria defined in \snippet{\$crits}. Fluent interface, so should return \snippet{\$this}.\\
+	Can be called on \emph{valid} \snippet{\$this} instances only.
+	\item \snippet{findOne(\$data=array())} \hfill \\
+	Finds 0 or 1 record matching specified data defined in \snippet{\$data}. Returns false if not found, or a new instance of \snippet{\$this} for specified record. \\
+	Can be called on any \snippet{\$this} instance.
+	\item \snippet{find(\$data=array(), \$sort=array(), \$limit=0, \$offset=0)} \hfill \\
+	Finds all records matching specified data defined in \snippet{\$data}. \\
+	Can be optionally sorted using \snippet{\$sort} criteria. \\
+	A subset of \snippet{\$limit} records starting at \snippet{\$offset} can be returned.\\
+	Returns empty array if nothing found, or an array of model instances of matching records. \\
+	Can be called on any \snippet{\$this} instance.
+	\item \snippet{count(\$data=array())} \hfill \\
+	Returns the number of records matching specified data defined in \snippet{\$data}. \\
+	The number is the number of records that would be returned by find without \snippet{\$limit} or \snippet{\$offset} set (unfiltered).
+\end{itemize}
+
+\paragraph{Extend SimpleMysqlModel $|$ SimpleMongoDBModel}
+\begin{note}
+	To use Mysql$|$MongoDB models, the \keyword{init plugin} `\varvalue{mysql}'$|$`\varvalue{mongodb}' must be enabled in the configuration file, and the relevant configuration properties for either database set properly.
+\end{note}
+
+\subparagraph{Unique ID}
+
+Both model implementations have a unique ID named \variable{\_id} : generally \variable{AUTO\_INCREMENT} for Mysql and \variable{UID} for \keyword{MongoDB}. By default, the function \snippet{getUniqueIds()} returns an array with a single element \variable{\_id} in it. Should a model have another way to define uniqueness, it can override \snippet{doGetUniqueIds}. This function is internally used by the \snippet{update} method to apply update data on the current record only.\\
+For \keyword{MongoDB} model, \variable{\_id} is mandatory and will thus always be non empty. On the other hand, Mysql model may have empty \variable{\_id}.
+
+\subparagraph{Defining properties}
+
+Both model implementations adopt the public class variable approach to define model properties : \variable{\_id} is the only built-in such variable already defined for all models.
+All other properties should be defined through a set of \snippet{public \$my\_prop}.\\
+\begin{note}
+Reflection is used internally to extract properties from the class. Thus, only \emph{properties} should be public!
+\end{note}
+
+\subparagraph{Hydrating data}
+
+Hydration occurs before/after CRUD operations. It's a process that allows to format/convert data passed as a parameter when necessary, or set some data for system defined values (\eg creation date\ldots).
+
+The following are defined and can be overridden for MongoDB models :
+\begin{description}
+	\item[before insert/update] : \snippet{doHydrateInsertData(\$data):array}
+	\item[before findOne/find] : \snippet{doHydrateFindCriteria(\$data):array}
+	\item[after insert/update/findOne/find] : \snippet{doHydrateMapData(\$data):array}
+\end{description}
+
+In addition, the related public methods (hydrateData, hydrateFindCriteria) perform some additional formatting on the \variable{\_id} field :
+\begin{itemize}
+	\item Before \snippet{insert}, \_id is converted from a string to a \classname{MongoId} object
+	\item Before \snippet{find}/\snippet{findOne}, \_id is converted if it is a string to a \classname{MongoId} object
+\end{itemize}
+
+
+The following are defined and can be overridden for Mysql models :
+\begin{description}
+	\item[before insert] : \snippet{doHydrateInsertData(\$data):array}
+	\item[before update] : \snippet{doHydrateUpdateData(\$data):array}
+	\item[before findOne/find] : \snippet{doHydrateFindCriteria(\$data):array}
+	\item[after insert/update/findOne/find] : \snippet{doHydrateMapData(\$data):array}
+\end{description}
+\begin{note}
+	\snippet{doHydrateFindData} creates bound parameters for query. Therefore, it \emph{must be called last using \snippet{parent::doHydrateFindCriteria} if overridden!}
+\end{note}
+
+\subparagraph{Registry objects}
+
+\keyword{MongoDB} \keyword{init plugin} registers two objects in the \keyword{registry} : `\varvalue{mongo\_db}' (used by the associated model) and `\varvalue{mongo\_db\_admin}' (not used but available to the developer).\\
+The former is a connection to the DB name defined in the configuration file, while the latter is a global object that allows to do admin operations for \keyword{MongoDB}.
+
+\keyword{Mysql} \keyword{init plugin} registers a single object in the \keyword{registry} that is used by the associated model : `\varvalue{mysql\_db}'.
+
+\subparagraph{Initialization}
+
+\keyword{MongoDB} model defines two init methods : \snippet{dbInit(\$db)} and \snippet{init()}, called when a new instance is created. The former allows to set global properties on the given \variable{\$db} object (\eg \snippet{ensureIndex}), while the latter allows to perform other initializations (\eg assign default values to properties\ldots).
+
+\keyword{Mysql} model defines the \snippet{init()} method, called when a new instance is created. It can be used to perform various initializations (\eg assign default values to properties\ldots).
+
+\subparagraph{Define the target collection/table}
+
+\keyword{MongoDB} model defines the abstract method \snippet{getDbSection()}, which shall return the collection name current model instance is operating on.
+
+\keyword{Mysql} model defines the abstract method \snippet{getTable()}, which shall return the table name current model instance is operating on.
+
+
+\subsection{Managing controllers} \label{sec:managing-controllers}
+
+\subsubsection{Canonical name to controller instance mapping} \label{sec:canonical-name-to-model-mapping}
+
+Refer to \nameref{sec:canonical-name-to-controller-instance-mapping} regarding the mapping rules.
+
+\subsubsection{Creating a controller} \label{sec:creating-a-controller}
+
+The \keyword{SimpleMVC} framework supplies two base controller classes that the developer can extend :
+\begin{itemize}
+	\item SimpleController, for basic GET/POST support (No Ajax)
+	\item AjaxController, which adds XMLHttpRequest (Ajax) requests to the above. Response are sent in JSON format, and the dispatch method does not return (script ends after JSON data are sent back).
+\end{itemize}
+
+The class should be named ``MycontrollerController'' (only the first letter is uppercased, this is not Camel case!), which would then become instantiable through its canonical name `\varvalue{mycontroller}' and instantiated with \snippet{MVC::controller('mycontroller')}.
+
+It is also possible to create a new controller from scratch by implementing the \classname{Iface\_Controller} or the \classname{Iface\_AjaxController} interface.
+
+\paragraph{Implement Iface\_Controller $|$ Iface\_AjaxController}
+
+The methods to define are :
+\begin{itemize}
+	\item \snippet{dispatch()} \hfill \\
+	Dispatches the request and performs associated action. Fluent interface, so should return \snippet{\$this}.\\
+	Upon return, the \snippet{view()} method should return the view canonical name to render, \snippet{isForward()} method should return true if internal redirect is needed,
+	and perform any external redirect needed without returning. \\
+	Should not return when implementing an ajax controller.
+	\item \snippet{redirect(\$to)} \hfill \\
+	Performs an external redirect to specified URL. This method does not return.
+	\item \snippet{isForward()} \hfill \\
+	Returns true if current controller process requests an internal redirect.
+	\item \snippet{getHeader(\$header)} \hfill \\
+	Returns the specified HTTP header value.
+	\item \snippet{getRequestMethod()} \hfill \\
+	Returns 'GET', 'POST'\ldots for current request.
+	\item \snippet{getPost()} \hfill \\
+	Returns the POST data as an array (may be sanitized in the process).
+	\item \snippet{getParams()} \hfill \\
+	Returns the GET data as an array (may be sanitized in the process).
+	\item \snippet{isPost()} \hfill \\
+	Returns true when current request method is POST.
+	\item \snippet{isGet()} \hfill \\
+	Returns true when current request method is GET.
+	\item \snippet{setView(\$view)} \hfill \\
+	Sets the view canonical name to render when this controller ends its process.
+	\item \snippet{view()} \hfill \\
+	Returns currently set view canonical name.
+	\item \snippet{isXmlHttpRequest()} [AjaxController only] \hfill \\
+	Returns true when current request method is an Ajax request.
+	\item \snippet{getXmlHttpResponse()} [AjaxController only] \hfill \\
+	Returns the JSON response to send back to the client.
+\end{itemize}
+
+\paragraph{Extends SimpleController $|$ AjaxController}
+
+\subparagraph{Implementing get/post/ajax dispatchers}\hfill\\
+
+Main function \snippet{dispatch} called by \classname{FrontController} further dispatches the request based on the
+\keyword{request method}; currently, GET and POST are supported with \snippet{doGetDispatch} and \snippet{doPostDispatch} methods.\\
+For ajax requests, if controller is a subclass of \classname{AjaxController}, a special \snippet{doAjaxDispatch} method is also provided.
+\begin{note}
+Default implementation for GET and POST dispatches raise a \classname{RequestException} (invalid request).
+\end{note}
+Controllers should override any of these methods to prevent the exception from being raised. When using \classname{AjaxController}, \snippet{doAjaxDispatch} will be called regardless of GET/POST request method.
+Should an error occur during the request process, an exception should be raised; \classname{RequestException} for request related errors, or other exceptions for system related errors\ldots.
+
+Each controller may access the \variable{requestParams} instance variable, which is an array (list) of parameters extracted from the URL, if one is using \keyword{SEO-friendly URL}s.
+
+\subparagraph{Passing request data to views}
+
+Controllers can store data which are meant to be available to the target view.\\
+This can be done either through direct assignment on the controller instance, \eg{} \snippet{\$this->myvar = 'foo'}, or through the \snippet{addRequestData(\$key, \$value} method.\\
+Similarily, those data can be retrieved from within the controller through the direct accessor syntax \snippet{if (\$this->myvar === 'foo')}, or through the \snippet{getRequestData(\$key=null)} method. The latter returns all (key,value) pairs if its \$key argument is null.
+
+When in the view, all data stored this way are accessible through the direct accessor syntax, like view metadata.\\
+\snippet{<?php if (\$this->myvar === 'foo'): echo \$this->myvar; endif; ?>}.
+
+Important : Some keys have special meaning as views can't be used as request data keys (this will cause the view to fail during rendering). These values are :
+\begin{itemize}
+	\item content
+	\item filters
+	\item layout
+	\item locale
+	\item location
+	\item order
+	\item title
+	\item view
+\end{itemize}
+
+\begin{note}
+Example shown use a string as the value, but any datatype can be stored: objects, arrays...
+\end{note}
+
+\subparagraph{About POST/Redirect/GET pattern}
+\href{http://en.wikipedia.org/wiki/Post/Redirect/Get}{Post/Redirect/Get} is a design pattern which helps avoiding duplicate form submission and allow user agents to behave more intuitively with bookmarks and the refresh button. Basically, each POST request generates a redirect (303) to the same page after it finishes processing the request.
+
+The \classname{SimpleController} has built-in support for this design; to enable it, the subclass controller should call \snippet{setRedirectOnPost(true)} in the constructor. This behavior is not enabled by default, so without the flag set to true, the POST is performed normally. \\
+In the case where it is enabled, \snippet{dispatch} method takes care of it by detecting the request type. When a POST request is detected, the following is performed :
+\begin{itemize}
+	\item Delegates the process to \snippet{doDispatch} (\snippet{doPostDispatch} will be called at this point)
+	\item Creates a new temporary \keyword{session namespace} associated with that controller
+	\item Stores into the newly created session all (key,value) pairs stored as request data, returned by \snippet{getRequestData}. This is necessary as a 303 redirect will generate a new request, and thus all request data will be lost in the next request. Only session data are persisted.
+	\item Perform a 303 redirect to specified view (it must be handled by the same controller or the session namespace will not match!)
+	\item (New request) Checks whether request is a GET and has a valid namespace session named after the controller
+	\item If true, then gets all (key,value) pairs previously stored in this namespace session and put them back into the controller as request data using \snippet{addRequestData}
+	\item Unset the namespace session
+\end{itemize}
+\begin{note}
+This process relies on sessions, therefore \classname{Zend\_Session} is used, regardless of whether the \keyword{session plugin} is active or not. Moreover, the latter can be used without overlapping because namespaces are different.
+\end{note}
+
+
+\subsection{Managing layouts} \label{sec:managing-layouts}
+
+\subsubsection{About layouts} \label{sec:about-templates}
+
+A \keyword{layout} in this framework is a wrapper around the \keyword{Savant3} templating engine; it is comosed of the \classname{Layout} class, and provide additional features to \classname{Savant3}, such as coupling with \classname{SimpleView} objects.
+Thus, \keyword{layout}s and \keyword{view}s are tighly coupled together. Both are \keyword{phtml} files. They are located inside one of the directories returned by \snippet{Utils\_ResourceLocator::layoutDirs()}.\\
+The framework provides a single layout : \filename{nil.phtml}, which corresponds to the empty template : only the view content is displayed.
+
+\subsubsection{Layouts location} \label{sec:layouts-location}
+
+The base directories for layouts are given by \snippet{Utils\_ResourceLocator::layoutDirs()}. One is returned for each defined \keyword{namespace}, and for both the \uservariable{site root dir} and \uservariable{framework root dir} (the latter does not define \keyword{namespace}s).
+
+Layouts are instantiated by \keyword{view} instances. The mandatory `\variable{layout}' metadata in the view header (Refer to \nameref{sec:view-header}) has the name of the layout to wrap the view with.
+Given the application structure defined in \nameref{sec:framework-request-dispatching-process} section, the following mapping will be performed, in this order, if layout metadata value is 'top' :
+
+\begin{center}
+\begin{unbreakable}
+{\scriptsize
+\begin{verbatim}
+	----------------------------------     ----------------------------------------------------------
+	| namespace : <admin.mysite.com> | --> | location : <<site root dir>>/layouts/admin.mysite.com/ |
+	----------------------------------     ----------------------------------------------------------
+	             ||
+	             \/
+	--------------------------------       --------------------------------------------------------
+	| namespace : <www.mysite.com> | ----> | location : <<site root dir>>/layouts/www.mysite.com/ |
+	--------------------------------       --------------------------------------------------------
+	             ||
+	             \/
+	----------------------------           ----------------------------------------------
+	|    Framework layouts     | --------> | location : <<framework root dir>>/layouts/ |
+	----------------------------           ----------------------------------------------
+\end{verbatim}
+}
+\end{unbreakable}
+\end{center}
+\begin{note}
+`-' characters in the namespace are replaced by `\_', so the namespaced folders should be named accordingly.
+\end{note}
+
+For each of the folders generated above, layout filename \varvalue{top}.phtml will be appended :
+\begin{itemize}
+	\item \filename{<site root dir>/layouts/admin.mysite.com/top.phtml}
+	\item \filename{<site root dir>/layouts/www.mysite.com/top.phtml/}
+	\item \filename{<framework root dir>/layouts/top.phtml/}
+\end{itemize}
+
+Found file shall contain the whole content to be displayed. Everytime a \classname{SimpleView} is instantiated, a new \classname{Layout} object is also created. Calling \snippet{\$view->render()} actually delegates the rendering process to its underlying layout. If the latter includes the view content into its own, the PHP code embedded into the view will be ran \emph{in the context of the layout}, \ie \snippet{\$this} will refer to the \classname{Layout} instance inside the view code. It also means that \snippet{\$this->view} is the view object itself inside a view phtml.
+
+\subsubsection{Writing the layout content} \label{sec:writing-the-layout-content}
+
+\keyword{Savant3} \hyperref[sec:template-filters-and-plugins]{template plugins} can be used inside the layout phtml code.
+
+The view metadata defined in its \hyperref[sec:view-header]{header} can be accessed through the \variable{view} property : \snippet{\$this->view}, which is always set . The snippet below shows a very basic example of a layout :
+\begin{lstlisting}[label=layout-sample,caption=Simple layout sample,language=HTML]
+<!doctype html>
+<html>
+  <div id="header">
+    <?php echo $this->header(); ?>
+  </div>
+<?php if (isset($this->view->isRoot())): ?>
+  <div id="top-banner">
+    <?php echo $this->xl8('Welcome to my site!'); ?>
+  </div>
+<?php endif; ?>
+  <div id="main">
+    <span class="title"><?php echo $this->title(); ?>
+    <?php echo $this->content; ?>
+  </div>
+  <div id="footer">
+    <?php echo $this->footer(); ?>
+  </div>
+</html>
+\end{lstlisting}
+
+The simple listing above shows how template \keyword{plugin}s are called (\snippet{\$this->header()}, \snippet{\$this->footer()}, \snippet{\$this->xl8()} and \snippet{\$this->title()}) : each returns some content. It is thus possible to create different layouts and still use common parts through such \keyword{plugin}s.
+\begin{note}
+  \variable{xl8} and \variable{title} are \keyword{plugin}s supplied with the framework. See \nameref{sec:built-in-template-plugins} for the list.
+\end{note}
+The \variable{view} property is also used in a conditional code to show a banner when the current layout is displayed for the root view (top of hierarchy).\\
+The property \variable{content} is always set in \classname{Layout} instances, and contains the \emph{interpreted} resulting output from the view.
+
+The view \variable{content} is interpreted \emph{before} the layout is rendered. This allows the view to modify the environment prior to rendering, such as \hyperref[sec:managing-stylesheets-and-scripts]{adding new CSS/javascript} to the page. Echoing it in the layout is embedding the view into it. If the content is never echoed in the file, the view content will never be shown. It is also possible to embed the view content multiple times.
+
+\subsubsection{Template filters and plugins} \label{sec:template-filters-and-plugins}
+
+Template \keyword{filter}s and \keyword{plugin}s are features provided by the \keyword{Savant3} templating engine and reused as is.
+
+Filters are ran after the rendering on the generated output to perform post-processing on the text, in the specified order, and returned output becomes the input for the next \keyword{filter} until they are all processed.\\
+Plugins are components that can be ran inside the layout code (or the view code, as it is ran in the same context), which can do various things such as returning pieces of code. As opposed to the ones found in the layout content, template \keyword{plugin}s inside views are processed before the layout is rendered, as stated above.
+
+\paragraph{Specify global filters}
+
+Global filters are applied to all layouts or views. New global filters can be added using \snippet{Layout::addGlobalFilters(array())}.\\
+Parameter is an array of filter names to priorities.
+
+\paragraph{Specify individual view filters}
+
+View filters are defined in the \hyperref[sec:view-header]{view header} and apply when that view is rendered only. No priority can be defined for view filters: thus, they all have the default priority, \ie 50.
+
+View Filters is referenced through the ``\varvalue{filters}'' \keyword{YAML} property, and is an array of filter names. See next paragraph for a sample.
+
+\paragraph{Filter Priority}
+Filters can be assigned a priority from 0 to 100, default being 50. Before \keyword{filter}s are processed, they are sorted by descending priority (100 is highest, 0 is lowest).
+Filters specified in the \nameref{sec:view-header} always have the default priority. The order \keyword{view filter}s will be ran is the order they were declared. All \keyword{global filter}s with a priority of 50 will be ran before \keyword{view filter}s.\footnote{Global and view filters are the same classes, only the declaration is different}
+
+The following graph summarizes priorities; \variable{[G]} means \keyword{global filter}, \variable{[V]} means \keyword{view filter}.
+\begin{lstlisting}[label="set-filters",caption="Set global and view filters",language=PHP]
+Layout::addGlobalFilters(array('filter1'=>100, 'filter2'=>80, 'filter4'=>50,
+							   'filter3'=>50, 'filter7'=>20, 'filter8'=>0));
+
+// .... in the view header .... //
+/*
+---
+filters:
+  - filter6
+  - filter5
+---
+*/
+\end{lstlisting}
+\begin{center}
+{\scriptsize
+\begin{verbatim}
+	------------------------------
+	| [G] Filter1 priority : 100 |
+	------------------------------
+	              ||
+	              \/
+	-----------------------------
+	| [G] Filter2 priority : 80 |
+	-----------------------------
+	              ||
+	              \/
+	-----------------------------
+	| [G] Filter4 priority : 50 |
+	-----------------------------
+	              ||
+	              \/
+	-----------------------------
+	| [G] Filter3 priority : 50 |
+	-----------------------------
+	              ||
+	              \/
+	-----------------------------
+	| [V] Filter6 priority : 50 |
+	-----------------------------
+	              ||
+	              \/
+	-----------------------------
+	| [V] Filter5 priority : 50 |
+	-----------------------------
+	              ||
+	              \/
+	-----------------------------
+	| [G] Filter7 priority : 20 |
+	-----------------------------
+	              ||
+	              \/
+	----------------------------
+	| [G] Filter8 priority : 0 |
+	----------------------------
+\end{verbatim}
+}
+\end{center}
+
+\paragraph{Filter / Plugin locations}
+
+\classname{Layout} sets the \keyword{filter} and \keyword{plugin} locations internally; the path is the same as the one used in \keyword{Savant3}.
+
+This framework supplies some \keyword{filter}s and \keyword{plugin}s as well, so they can be found at two locations :
+\begin{itemize}
+	\item framework : \uservariable{framework root dir}/libs/savant3/Savant3/resources/
+	\item site : \uservariable{site root dir}/libs/savant3/Savant3/resources/
+\end{itemize}
+
+Any filter/plugin saved in either folder will be automatically become available to \keyword{layout}s and \keyword{view}s.\\
+
+\paragraph{Creating a new filter}
+
+\keyword{Savant3} template \keyword{filter}s should subclass \classname{Savant3\_Filter}. The new filter classname is also expected to be of the form \classname{Savant3\_Filter\_Foo}, where foo will be the filter name used to specify global/view filters, as seen above.
+
+Filters need to implement a single static method : \snippet{static public function filter(\$buffer):string}. Input is the rendered layout+view content, and the output should be the filtered input.\\
+Filters may not modify the input at all (\ie return it as is), but rather perform some post-process after the rendering.
+
+The following snippet shows the ``SiteBase'' filter supplied in the framework, which rewrites all absolute HTML links such as href (A elements), action (FORM elements), src (IMG elements) by prepending the site base string when defined (\ie site top is not accessible through the docroot, \eg located at \filename{http://www.myhost.com/mysite/} instead of \filename{http://www.mysite.com/}). File is \filename{Savant3\_Filter\_SiteBase.php}.
+\begin{lstlisting}[label="filter-sitebase",caption="siteBase filter",language=PHP]
+final class Savant3_Filter_SiteBase extends Savant3_Filter
+{
+    static function filter($buffer)
+    {
+        $buffer = preg_replace('!(href|action|src)=(["\'])/([^"\']*)(["\'])!',
+							   '$1=$2'.Utils_Url::getSiteBase().'$3$4', $buffer);
+        $buffer = preg_replace('!(["\'])/(skin|upload|script)/!',
+							   '$1'.Utils_Url::getSiteBase().'$2/', $buffer);
+        return $buffer;
+    }
+}
+\end{lstlisting}
+This filter can be added to the global/view filters by specifying ``\varvalue{siteBase}'' as the filter name.
+
+\paragraph{Creating a new plugin}
+
+\keyword{Savant3} template \keyword{plugin}s should subclass \classname{Savant3\_Plugin}. The new plugin classname is also expected to be of the form \classname{Savant3\_Plugin\_Foo}, where foo will be the plugin name referenced in layouts/views with the code \snippet{\$this->foo()}.
+
+As opposed to filters, which are internally ran by the \keyword{Savant3} engine and thus have a fixed method prototype, \keyword{plugin}s are called by the template/view developer and can therefore have any parameter needed.
+
+Plugins need to implement a single method : \snippet{public function xxx(...)}, where xxx is the plugin name, which induces its classname as well. \classname{Savant3\_Plugin\_FooBar} needs to have a public method called \variable{fooBar} to be recognized by the engine. Parameters and return value is not fixed: some \keyword{plugin}s may return a string or some content while others may buffer the output and display it directly, and thus return nothing. The \keyword{Savant3} \variable{eprint} is such plugin.
+
+The following snippet shows the ``xl8'' template plugin, which gets a \keyword{gettext} translation in the current locale for specified text :
+\begin{lstlisting}[label="xl8-plugin",caption="Code for the Xl8 template plugin",language=PHP]
+final class Savant3_Plugin_xl8 extends Savant3_Plugin
+{
+    public function xl8($str, $escape=true)
+    {
+        static $xl8 = null;
+        if (is_null($xl8)) {
+            $xl8 = Zend_Registry::get('Zend_Translate');
+        }
+        $str = $xl8->_($str);
+        if ($escape) {
+            $str = $this->Savant->escape($str);
+        }
+        return $str;
+    }
+}
+\end{lstlisting}
+
+\paragraph{Built-in template filters}
+
+This framework provides the following template \keyword{filter}s :
+\begin{description}
+	\item[compress] : compresses CSS content (remove comments, strip whitespaces/newlines\ldots)
+	\item[siteBase] : append subdirectory to absolute urls defined in href, action, src... if site top page is not under the docroot
+\end{description}
+
+\paragraph{Built-in template plugins} \label{sec:built-in-template-plugins}
+
+This framework provides the following template \keyword{plugin}s :
+\begin{description}
+	\item[breadcrumbs] : Builds an array of current view ancestors, from current to root. Can be used to display breadcrumbs
+	\item[menu] : Returns the root view object and all its descendents whose \variable{location} metadata is set to specified value. \\
+	Menus can be built using this plugin : \ie all views that must appear in the same menu may have the same location value. Those that don't will not be in the child list.
+	\item[partial] : Interpret PHP code from input string, and return the result. Similar to \snippet{include}, only for string instead of files.
+	\item[scripts] : Processes all registered javascript files/scripts, aggregate all files into one and return HTML content which load all javascript from the page. See \nameref{sec:managing-stylesheets-and-scripts}.
+	\item[selfUrl] : Returns an absolute URL to current page.
+	\item[stylesheets] : Aggregates all registeed CSS and return HTML content which load all CSS from the page. See \nameref{sec:managing-stylesheets-and-scripts}.
+	\item[timer] : Stops the timer started by \snippet{Init::main()} and returns an HTML comments enclosing the timer elapsed time.
+	\item[title] : Returns the view localized title/subtitle. Expects metadata ``title'' (possibly \keyword{i18n} formatted) in the view header. If ``subtitle'' is set as well, it is appended to the title. The result is escaped and returned.
+	\item[tzTime] : Returns specified \keyword{timestamp} into a localized time using current \keyword{timezone} (from the configuration file).
+	\item[xl8] : Translates specified string to current locale using \keyword{gettext}.
+- breadcrumbs
+- menu
+\end{description}
+
+\subsection{Managing views} \label{sec:managing-views}
+
+A view is a \keyword{phtml}\footnote{HTML with embedded PHP code} file located under the views directories. Views are hierarchized based on their relative path from the views root directory.
+PHP code can be embedded directly into the view (using \snippet{<?php ... ?>}), or through template \keyword{plugin}s (See page \pageref{sec:template-filters-and-plugins}).
+This hierarchy allows to build a \keyword{site map}, \keyword{breadcrumb}s, or navigation menus. The framework provides template \keyword{plugin}s to generate those automatically.
+
+\subsubsection{Canonical name to view instance mapping} \label{sec:canonical-name-to-view-mapping}
+
+Refer to \nameref{sec:canonical-name-to-view-instance-mapping} regarding the mapping rules.
+
+\subsubsection{View hierarchy}
+
+\classname{SimpleView} instances have 0 or 1 parent and 0 or more children. Parent is null if the view instance refers to the top of the hierarchy, while children are empty if it is a leaf.
+
+Given the application structure defined in \nameref{sec:framework-request-dispatching-process} section, below is a view directory structures sample alongwith the associated view hierarchy :
+\begin{unbreakable}
+\dirtree{%
+.1 \uservariable{site root dir}.
+.2 views \treedesc{Views root dir.}.
+.3 www.mysite.com \treedesc{namespace.}.
+.4 index.phtml \treedesc{Root. cname: /. parent: null. children: [/foo/,/baz/]}.
+.4 foo \treedesc{foo subtree}.
+.5 index.phtml \treedesc{cname: /foo/. parent: /. children: [/foo/bar/,/foo/baz/]}.
+.5 bar.phtml \treedesc{cname: /foo/bar/. parent: /foo/. children: []}.
+.5 baz \treedesc{baz subtree}.
+.6 index.phtml \treedesc{cname: /foo/baz/. parent: /foo/. children: [/foo/baz/aaa/]}.
+.6 aaa.phtml \treedesc{cname: /foo/baz/aaa/. parent: /foo/baz/. children: []}.
+.4 baz.phtml \treedesc{cname: /baz/. parent: /. children: []}.
+.3 admin.mysite.com \treedesc{namespace}.
+.4 baz.phtml \treedesc{cname: /baz/. parent: /. children: []}.
+.4 foo \treedesc{foo subtree}.
+.5 baz \treedesc{baz subtree}.
+.6 index.phtml \treedesc{cname: /foo/baz/. parent: /foo/. children: [/foo/baz/aaa/]}.
+.6 aaa.phtml \treedesc{cname: /foo/baz/aaa/. parent: /foo/baz/. children: []}.
+.3 static \treedesc{static views}.
+.4 404.phtml \treedesc{cname: /404/. parent: /. children: []}.
+.4 rerror.phtml \treedesc{cname: /rerror/. parent: /. children: []}.
+} %enddirtree
+\end{unbreakable}
+
+Each level is expected to have at least an \filename{index.phtml}. Any other file located at the same level as the latter will become its children.\\
+View \keyword{canonical name} is the file hierarchy minus the \variable{.phtml} extension; \eg \filename{\ldots{}/foo/bar.phtml} $\implies$ \varvalue{/foo/bar/}.\\
+However, for \filename{index.phtml} files, the whole filename is dropped; \eg \filename{\ldots{}/foo/index.phtml} $\implies$ \varvalue{/foo/}.\\
+As a consequence, view \keyword{canonical name}s to view filename is not a 1-1 mapping : \eg \varvalue{/foo/} can refer to either \filename{\ldots/foo.phtml}, or \filename{\ldots/foo/index.phtml}.
+
+\subsubsection{View header} \label{sec:view-header}
+
+Every view has a header in \keyword{YAML} format. \keyword{YAML} is a human-readable format; data structure hierarchy is achieved through outline indentation :
+\begin{lstlisting}[label="yaml-sample",caption="YAML format sample",language=bash]
+---
+# Comment
+property: value  # Scalar
+list:			 # List of elements
+ - one
+ - two
+ - three
+array:			 # Associative array
+ sub1: value	 # Scalar
+ subarr:		 # Nested array
+  sub2: value
+  sub3:
+   - four
+   - five
+---
+\end{lstlisting}
+
+A \keyword{view} file needs to have the header at the top of the file. Header is delimited using three hyphens `-'. The view content starts after the closing hyphens triplet.
+
+Currently, the framework requires the following properties to be set in every header :
+\begin{description}
+	\item[layout] The layout name to render the view into. See \nameref{sec:layouts-location}.
+\end{description}
+
+Additionally, the framework recognizes the following properties if set :
+\begin{description}
+	\item[title] Defines the title of the current view. Can be displayed using the title savant \keyword{plugin}. Can be \keyword{internationalized} (See \nameref{sec:i18n-yaml}).
+	\item[filters] A \emph{list} of template filters to apply on the view. See \nameref{sec:template-filters-and-plugins}.
+	\item[order] A number defining the position of current view among its siblings. Used by \varvalue{menu} and \varvalue{breadcrumbs} template \keyword{plugin}s, \snippet{SimpleView::children()} to order view children.\\
+	\filename{index.phtml} located at the same depth will be compared to each other, while non \filename{index.phtml} files located within a given subdirectory will be compared to each other.
+	\item[location] An arbitrary value that the developer can use with the \varvalue{menu} template plugin: only views whose \variable{location} property is set and match specified value will be returned when getting view descendents.
+\end{description}
+
+\subsubsection{Creating a view file} \label{sec:creating-the-view-file}
+
+\begin{itemize}
+	\item Create the .phtml file under the desired location : static file => \uservariable{site root dir} static folder. other => \uservariable{site root dir} views folder.
+	\item Add a \keyword{YAML} header and the required ``\variable{layout}'' property. (Other properties may be added as needed).
+	\item The view content is everything below the header. All values previously stored in the global \keyword{registry} are available. It is a way for controllers to communicate with the upcoming view, by storing data to the \keyword{registry} that they can later retrieve.
+\end{itemize}
+
+\subsubsection{View object}
+
+Though the developer manages views as phtml files, \classname{SimpleView} implementing the \classname{Iface\_View} interface, wraps the file and takes care of extracting header info, content, and provide some utility methods, including \snippet{parent()} and \snippet{children()}. For the complete API, refer to the \keyword{PHPdoc}.
+
+A static utility class for views called \classname{Utils\_Views} also provides some functions that handles view objects.
+It is mainly used internally, but they can also be useful in some cases. The \keyword{PHPdoc} provide detailed explanations on their usage.
+
+\section{Plugins} \label{sec:plugins}
+
+This framework currently has the following types of \keyword{plugin}s :
+\begin{itemize}
+	\item \keyword{Init plugin}s, called during the library initialization and before request is parsed by \classname{FrontController}
+	\item \keyword{View plugin}s, called after controller dispatch and before view is rendered.
+	\item \keyword{Resource plugin}s, called for each site resource ( \keyword{skin}, \keyword{scripts} and \keyword{upload}).
+\end{itemize}
+
+Plugins can be enabled on a \keyword{namespace} basis using the configuration file; The format is :
+\label{code:plugin-config}
+\begin{lstlisting}[label="plugin-config",caption="Config format for plugins",language=bash]
+<namespace>:
+  system:
+    plugins:
+      init: 	# list of init plugins to enable
+        - myplug1
+        - myplug2
+      view:		# list of view plugins to enable
+        - myplug1
+        - myplug2
+      resources: # list of resource plugins to enable
+        image:
+          - myplug1
+          - myplug2
+\end{lstlisting}
+
+\keyword{Init plugin}s can be located either in \\
+\filename{<site root dir>/libs/plugins/Init}
+ or \filename{<framework root dir>/libs/plugins/Init}.
+
+\keyword{View plugin}s can be located either in \\
+\filename{<site root dir>/libs/plugins/View}
+ or \filename{<framework root dir>/libs/plugins/View}.
+
+\keyword{Resource plugin}s can be located either in \\
+\filename{<site root dir>/libs/plugins/Resource}
+ or \filename{<framework root dir>/libs/plugins/Resource}.
+
+\subsection{Init plugins} \label{sec:init-plugins}
+
+\keyword{Init plugin}s shall implement the \classname{Iface\_Plugin\_Init} interface. The classname should be \classname{Plugin\_Init\_\varvalue{Foo}}, where \varvalue{Foo} becomes the init plugin name used in the configuration file (\eg myplug1/myplug2 above).
+
+There is a single method to implement for these \keyword{plugin}s : \\
+\snippet{public function process(Utils\_Config \$config, \$namespace, \$request) : void} :
+\begin{itemize}
+	\item \textbf{\$config} : The configuration object. \keyword{Init plugin}s may require their own configuration values, thus they can retrieve them through this object.
+	\item \textbf{\$namespace} : The current request namespace : the configuration object handles namespace resolution automatically, but \keyword{plugin}s may want to know which namespace is currently active.
+	\item \textbf{\$request} : The current request : should the init plugin need to do something based on the request.
+\end{itemize}
+
+\subsubsection{Built-in init plugins} \label{sec:builtin-init-plugins}
+This framework supplies the following \keyword{init plugin}s :
+
+\paragraph{Mysql init plugin} \label{sec:mysql-init-plugin}
+\subparagraph{Purpose}
+Establish a connection to a \keyword{Mysql} database.
+\subparagraph{Configuration}
+The following properties are needed in the configuration file, and their default values if not supplied :
+\begin{lstlisting}[label="mysql-config",caption="Mysql config",language=bash]
+<namespace>:
+  mysql:
+    host: <string>|'localhost' # The database host to connect to
+    name: <string>|'default'   # The database name
+    user: <string>|''          # The database username to connect with
+    pass: <string>|''          # The password for supplied username, if any
+\end{lstlisting}
+\subparagraph{Registry values}
+The \keyword{registry} property \varvalue{mysql\_db}, associated with the Mysql DB connection object, is stored in the \keyword{registry}.\\
+This \keyword{init plugin} is required if the application models subclass \classname{SimpleMysqlModel}.
+
+\paragraph{MongoDB init plugin} \label{sec:mongodb-init-plugin}
+\subparagraph{Purpose}
+Establish a connection to a \keyword{MongoDB} database.
+\subparagraph{Configuration}
+The following properties are needed in the configuration file, and their default values if not supplied :
+\begin{lstlisting}[label="mongodb-config",caption="MongoDB config",language=bash]
+<namespace>:
+  mongoDB:
+    host: <string>|'localhost' # The database host to connect to
+    port: <integer>|27017      # The database port to connect to
+    name: <string>|'default'   # The database name
+\end{lstlisting}
+\subparagraph{Registry values}
+The \keyword{registry} property \varvalue{mongo\_db}, associated with the MongoDB connection object to specified database, is stored in the \keyword{registry}.\\
+In addition, the \keyword{registry} property \varvalue{mongo\_db\_admin} is also stored: it is the global \keyword{MongoDB} object which can perform system-wide operations.
+This \keyword{init plugin} is required if the application models subclass \classname{SimpleMongoDBModel}.
+
+\paragraph{Session init plugin} \label{sec:session-init-plugin}
+\subparagraph{Purpose}
+Creates a client \keyword{session}.
+\subparagraph{Configuration}
+If the following property is defined in the configuration file, the session will time out after the specified value (in seconds) has elapsed:
+\begin{lstlisting}[label="sesion-config",caption="Session config",language=bash]
+<namespace>:
+  system:
+    session_timeout: <integer> # The value in seconds for the session timeout
+\end{lstlisting}
+\subparagraph{Registry values}
+The \keyword{registry} property \varvalue{session}, associated with the \keyword{session} object, is stored in the \keyword{registry}.\\
+The \keyword{session} object (\classname{Zend\_Session} uses getter/setter magic functions. The following snippet shows a simple example on how to use the \keyword{session} object:
+\begin{lstlisting}[label="session-code-sample",caption="Code using session",language=PHP]
+/*
+In the controller :
+-------------------
+*/
+$session = Zend_Registry::get('session'); // No check , assume it exists. In reality, isRegistered should be used.
+if ($session) {
+	$session->foo = 'bar';
+}
+// ....
+/*
+In the view :
+-------------
+*/
+<div><?php echo $session->foo; ?></div>
+\end{lstlisting}
+
+\subsection{View plugins} \label{sec:view-plugins}
+
+\keyword{View plugin}s shall implement the \classname{Iface\_Plugin\_View} interface. The classname should be \classname{Plugin\_View\_\varvalue{Foo}}, where \varvalue{Foo} becomes the view plugin name used in the configuration file (\eg myplug1/myplug2 \hyperref[code:plugin-config]{above}).
+
+There is a single method to implement for these \keyword{plugin}s :\\
+\snippet{public function process(Iface\_View \$view) : void} :
+\begin{itemize}
+	\item \textbf{\$view} : The view object about to be rendered.
+\end{itemize}
+
+This framework currently does not provide any \keyword{view plugin}.
+
+\subsection{Resource plugins} \label{sec:resource-plugins}
+
+\keyword{Resource plugin}s shall implement the \classname{Iface\_Plugin\_Resource} interface. The classname should be \classname{Plugin\_Resource\_\varvalue{Foo}}, where \varvalue{Foo} becomes the resource plugin name used in the configuration file (\eg myplug1/myplug2 \hyperref[code:plugin-config]{above}).
+
+There is a single method to implement for these \keyword{plugin}s :\\
+\snippet{public function process(string \$resource, string \$mime) : void} :
+\begin{itemize}
+	\item \textbf{\$resource} : The filename to the resource about to be output
+	\item \textbf{\$mime} : The mime type identified for this resource
+\end{itemize}
+
+Additional parameters may be supplied depending on the type of resource being handled.\\
+Resource are loaded during the init process using \classname{Utils\_ResourceLoader::outputResource}.
+It extracts the resource type to render using the mime type; the type is the first part of the string (until the slash /);
+\ie \varvalue{image/jpeg} will yield \varvalue{image} as the resource type.
+
+Resource types are then used to look for a specific \classname{Utils\_ResourceLoader\_Abstract} implementation targeting it.\\
+Convention is to name the \classname{ResourceLoader} after the resource type it handles.
+For instance, image resource types are handled through \classname{Utils\_ResourceLoader\_Image}, supplied by the library.
+
+If no specific loader can be found, the default one is used : \classname{Utils\_ResourceLoader\_Default}.
+
+This framework currently does not provide any \keyword{resource plugin}.
+
+\subsubsection{Image resource loader} \label{sec:image-resource-loader}
+Loader used for image type resources. The list of plugins to apply are defined in the configuration under\\
+\snippet{[namespace]->system->plugins->resources->image}.\\
+It passes a third parameter to the \snippet{process} method of each plugin: a \classname{WideImage} instance for the specified resource.\\
+Each plugin should also return the new updated \classname{WideImage} instance, or the original one if nothing was changed which is chained to the next plugin and so on.\\
+The return value from the last plugin is then used to output the image.
+
+
+\section{Handling translations} \label{sec:handling-translations}
+
+Translations files are namespaced and located under the \filename{langs} folder.\\
+Format used is \keyword{gettext}. It has a .po file, which is plain text, and a .mo file, which is a \keyword{gettext} compiled file.\\
+Free applications such as \keyword{poedit} (\url{http://www.poedit.net/}) are very good and can be used to do the translations.
+
+.po/.mo files should be named after the \emph{locale they define} : thus, the japanese translations would be in a file named \filename{ja\_JP.po}, giving once compiled \filename{ja\_JP.mo}.
+
+As the \filename{langs} folder is namespaced, it is possible to provide different translation files for each namespace. However, the framework does \emph{not} merge the content of all files found in each namespace.
+Therefore, all translation files in all namespaces should contain all translations, including those that do not change.
+
+\begin{note}
+When using poedit, it is possible to set some po headers that will allow auto update of new/old translation within the application. A good way to do so is to recursively look into \uservariable{site root dir} \filename{views}, \filename{libs}, \filename{layouts} for the keyword ``\varvalue{xl8}'', which is the template \keyword{plugin} for translating a string. It can appear in layouts, views and other \keyword{plugin}s, hence those three specific folders. Once it is set, all new translations will be added to the file automatically during synchronization, while removed ones will disappear.\\
+PHP parser type in poedit setup may also need to be changed to add \filename{*.phtml} file types to the list of processable files.
+\end{note}
+
+\subsection{i18n in YAML files/view headers} \label{sec:i18n-yaml}
+\keyword{YAML} properties \keyword{i18n} strings can be automatically extracted by software such as poedit provided \keyword{xgettext.pl} and \keyword{yaml-perl} packages are installed.\\
+A \keyword{YAML} property can be declared to be an \keyword{i18n} string by enclosing it with single quotes and prepending the \_ character, \eg \snippet{myproperty: \_'My string'}.\\
+A script like the following can be created (to be used by poedit automatic extraction feature to the po file). This script can be found in the \filename{config-default} folder. It should be placed to wherever the poedit program can find it :
+\begin{lstlisting}[label=poedit-yaml-i18n-extract-script,caption="Script to extract i18n strings from YAML by poedit",language=bash]
+#!/bin/bash
+out=$1;
+shift;
+sed -n '/---/,/---/ {p}' "$@" | xgettext.pl -o `basename $out` -p `dirname $out` -P yaml=*
+\end{lstlisting}
+Add a new \keyword{YAML} parser in poedit configuration in Edit > Preferences > Parsers Tab :\\
+``YAML'' : parser command = \uservariable{path/to/script/above/script.sh \%o \%F}.\\
+Apply this to \classname{*.yaml}; \classname{*.phtml} file types. (The above script will extract the \keyword{YAML} header only from input files).
+
+\classname{Layout} handles the \_'...' syntax and will extract the inner string automatically. The latter will be what is returned when querying the view object for this property.\\
+The \emph{title} savant3 \keyword{plugin} treats the ``title'' and ``subtitle'' properties from the view \keyword{YAML} header as an \keyword{i18n} string.
+
+\section{Handling resources} \label{sec:handling-resources}
+
+Currently, the framework consider as static resources the following :
+\begin{itemize}
+	\item script files (\eg \keyword{javascript}). Part of the skin resources, but can be served using a different URL (for third party \keyword{javascript} tools such as \keyword{ckeditor}).
+	\item skin files (\eg \keyword{CSS} files, \keyword{javascript}, graphics\ldots).
+	\item user uploads (under the \uservariable{resources root dir} folder).
+\end{itemize}
+If the request starts with \varvalue{/script/}, \varvalue{/skin/} or \varvalue{/upload/}, the process will assume what comes next is resp. a \keyword{javascript} file, a skin file, or an uploaded file.
+
+All resources follow the same pattern regarding the file location : each request prefix gets mapped to a base folder under \uservariable{resources root dir} or \uservariable{site root dir}, under which \keyword{namespace} folders may be defined, and the remaining path is a direct mapping of the request -minus the prefix- :
+\begin{description}
+	\item[/skin/] : Maps to \filename{<site root dir>/skins/<namespace>/} \\
+	$\implies$ \filename{/skin/img/top/01.jpg} : Maps to \filename{<site root dir>/skins/<namespace>/img/top/01.jpg}.\\
+	$\implies$ \filename{/skin/css/top.css} : Maps to \filename{<site root dir>/skins/<namespace>/css/top.css}.
+	\item[/script/] : Maps to \filename{<site root dir>/skins/<namespace>/scripts/} \\
+	$\implies$ This folder is a shortcut to \varvalue{/skin/scripts}.
+	\item[/upload/] : Maps to \filename{<resources root dir>/upload/} \\
+	$\implies$ The upload folder is not namespaced.\\
+	\eg \filename{/upload/img/my\_img.jpg} : Maps to \filename{<resources root dir>/upload/img/my\_img.jpg}.
+\end{description}
+
+\begin{note}
+Contrary to other types of resources, skin resources can have a ``\varvalue{default}'' \keyword{namespace} folder underneath it : it may thus contain non skin-specific resources (\ie shared among all namesapces).
+\end{note}
+
+\subsection{Managing skins} \label{sec:managing-skins}
+
+Skin resources shall contain everything layouts and views use for look'n'feel: this includes stylesheets ( \keyword{CSS} ), javascript, images\ldots.
+\begin{note}
+Though planned (and easy to add) but not yet available in the framework is a user-switchable skin functionality : it would be possible to change the look'n'feel or a site by changing the current skin.
+\end{note}
+\begin{note}
+As explained in section about \nameref{sec:managing-stylesheets-and-scripts}, stylesheets and scripts managed through \classname{Utils\_ResourceLoader} are later rendered via controllers supplied.\\
+The associated stylesheets view will look for stylesheets files in \filename{/skin/css/<stylesheet file>/} : thus, it is expected the application to have a ``\varvalue{css}'' folder in the \filename{skins} folder, as shown in the example before.\\
+The scripts are looked for into the ``\varvalue{/script/}'', so similarily, a \filename{scripts} should be available in the application \filename{skins} folder.
+\end{note}
+
+\subsection{Managing user uploads} \label{sec:managing-user-upload}
+
+Though no editor is supplied with the framework, third party tools such as \keyword{CKEditor} can provide media upload through their WYSIWYG editors. Usually, such software require a special folder where all files are uploaded and stored.\\
+The \filename{uploads} folder in the \uservariable{resources root dir} is meant for this. It has been tested with \keyword{CKEditor} 3.x with a modified version of the fckeditor filemanager for the file upload.
+
+\section{Managing stylesheets and scripts} \label{sec:managing-stylesheets-and-scripts}
+
+This framework has a utility called \classname{Utils\_ResourceLoader} that manages \keyword{stylesheet}s and \keyword{script}s. Until the layout is rendered, \keyword{controller}s, \keyword{view}s, view and init plugins, template \keyword{filter}s and \keyword{plugin}s can add either resource to the stack. During the layout rendering, all stacked resources will be aggregated through special controllers supplied by the framework, so that a single request will retrieve everything. In addition, stylesheets are also \emph{compressed} on-the-fly.
+
+\subsection{Adding stylesheets} \label{sec:adding-stylesheets}
+
+A new stylesheet is added by using \\
+\snippet{Utils\_ResourceLoader::addStylesheet(\$filename, \$media='screen')}.
+\variable{\$filename} is the basename of a \emph{PHP} script located in the folder designated by \filename{/skin/css/}.\\
+\variable{\$media} is a comma-separated list of valid CSS viewports. \eg \varvalue{screen}, \varvalue{print}, \varvalue{handheld}\ldots.
+The following snippet is a view plugin that adds stylesheets to the stack based on the view layout to be rendered :
+\begin{lstlisting}[label="add-style-sample",caption="Sample to add stylesheets to the stack",language=php]
+$layout = $view->layout;
+// Try to add stylesheet named after the layout template
+Utils_ResourceLoader::addStylesheet($layout, 'screen,print');
+// Add print only stylesheet
+Utils_ResourceLoader::addStylesheet('print', 'print');
+$b = new Browser();
+// Add IE specific stylesheet
+if ($b->getBrowser() === Browser::BROWSER_IE) {
+	Utils_ResourceLoader::addStylesheet('ie', 'screen,print');
+}
+\end{lstlisting}
+The code above will require a \keyword{stylesheet} to be named after the layout the view is rendered into. It also adds a ``print'' media stylsheet, named \varvalue{print} and an Internet Explorer specific \keyword{stylesheet} if detected browser is IE.
+Thus, the three following files will have to be available :
+\begin{itemize}
+	\item \filename{<site root dir>/skins/<namespace>/css/\$layout.php}
+	\item \filename{<site root dir>/skins/<namespace>/css/print.php}
+	\item \filename{<site root dir>/skins/<namespace>/css/ie.php}
+\end{itemize}
+
+Stylesheet files are in fact PHP files because :
+\begin{itemize}
+	\item They are not included directly as is in the layout, and thus there's no constraint on them being .css files.
+	\item By using PHP scripts, it is possible to build CSS whose content dynamically changes based on values stored in the \keyword{registry}, the request parameters\ldots.\\
+	It also allows to make changes more easily when dealing with fixed width designs where each div, span\ldots width/height depend on their parent values. PHP allows to
+	include calculations from base values so that any change somewhere is propagated everywhere.
+	\item by using \snippet{include}s, it is possible to split the \keyword{stylesheet} into smaller files, and reuse common parts while keeping specific ones in separate filenames.
+\end{itemize}
+
+\subsection{Adding scripts} \label{sec:adding-scripts}
+
+Scripts can be added to the resource stack, using\\
+\snippet{Utils\_ResourceLoader::addScript(\$fileOrScript, \$embedded=false, \$prio=50)}.\\
+\variable{\$fileOrScript} can be either :
+\begin{itemize}
+	\item The basename of a ``.js'' script file; this is the default : the content of the specified file will be included. Needs \variable{\$embedded} to be \varvalue{false}.
+	\item javascript code : Instead of including the content of a file, the content is this parameter directly. Needs \variable{\$embedded} to be \varvalue{true}.
+\end{itemize}
+\variable{\$embedded} \varvalue{false} if \variable{\$fileOrScript} is a file, \varvalue{true} if some code.
+\variable{\$prio} is a priority : if higher, the file/embedded code will be output before the lower priority ones.
+
+The following snippet is a view plugin that adds scripts to the stack based on the view layout to be rendered :
+\begin{lstlisting}[label="add-script-sample",caption="Sample to add scripts to the stack",language=php]
+$layout = $view->layout;
+Utils_ResourceLoader::addScript('jquery-1.4.2.min');
+if ('top' === $layout) {
+	Utils_ResourceLoader::addScript('top');
+}
+Utils_ResourceLoader::addScript('site');
+Utils_ResourceLoader::addScript('$(document).ready(MyLIB.lib.init);', true);
+Utils_ResourceLoader::addScript('$(window).load(MyLIB.lib.load);', true);
+\end{lstlisting}
+The code above adds \keyword{jquery} scripts to the stack as well as the site main javascript file. If the view layout is ``\varvalue{top}'', the file top is also added.
+Finally, two embedded code are added, which resp. call \snippet{MyLIB.lib.init} and \snippet{MyLIB.lib.load} on document \variable{onReady} and window \variable{onLoad} events.
+Thus, the following files will have to be available :
+\begin{itemize}
+	\item \filename{<site root dir>/skins/<namespace>/scripts/jquery-1.4.2.min.js}
+	\item \filename{<site root dir>/skins/<namespace>/scripts/top.js}
+	\item \filename{<site root dir>/skins/<namespace>/scripts/site.js}
+\end{itemize}
+
+\subsection{Render stylesheets and scripts in layouts}
+
+This framework supplies two template \keyword{plugin}s to render stacked stylesheets and scripts into a layout : \varvalue{stylesheets} and \varvalue{scripts}.
+
+\subsubsection{stylesheets template plugin}
+
+All stacked stylesheets are retrieved using \snippet{Utils\_ResourceLoader::getStylesheets()}.\\
+Each stylesheet will become a query string parameter to the \varvalue{stylesheets} controller. The key is the stylesheet name; the value is the list of media.
+The returned string is the generated query.
+
+Thus the typical use of the plugin is the following :
+\begin{lstlisting}[language=HTML]
+<link rel="stylesheet" href="<?php echo $this->stylesheets(); ?>" type="text/css" media="all" />
+\end{lstlisting}
+\snippet{media="all"} is fine because each file defines its own media targets and will be included using the CSS syntax.
+\begin{lstlisting}[language=CSS]
+@media screen,print {
+...
+}
+\end{lstlisting}
+
+For files added in section \nameref{sec:adding-stylesheets}, the following URL would be generated (after HTML encoding) :\\
+\begin{lstlisting}[language=HTML]
+/stylesheets?<layout>=screen,print&amp;print=print&amp;ie=screen,print
+\end{lstlisting}
+
+Thus, a single request to the \varvalue{stylesheets} controller will render all stylesheets into a single \variable{link}.\\
+The controller just sets a new \keyword{registry} property with the query string parameters.\\
+The view retrieves this parameter, and for each of them, tries to \snippet{include} the associated php file located in the correct folder.
+If a file is not found, the view ignores it and continue with the next one.
+
+\subsubsection{scripts template plugin}
+All stacked scripts are retrieved using \snippet{Utils\_ResourceLoader::getScripts()}. They are then sorted by descending order of priority.\\
+Files and embedded code are grouped separately :
+\begin{itemize}
+	\item Files yields a query string similar to the stylesheets one :\\
+\variable{/scripts?<script1>\&amp;<script2>...}.\\
+	\item Embedded code are all wrapped inside a \variable{<script></script>} element.
+\end{itemize}
+The returned string will be two \variable{<script>} elements : one with a \variable{src} attribute pointing at the generated query string URL above, another with all the embedded code.
+
+Thus the typical use of the plugin is the following :
+\begin{lstlisting}[language=HTML]
+<body>
+<div>...</div>
+<div id="footer">...</div>
+<?php $this->scripts(); ?>
+</body>
+\end{lstlisting}
+Putting the scripts at the end of the page improves performance.
+
+For files added in section \nameref{sec:adding-scripts}, the following URL would be generated (after HTML encoding) :\\
+\begin{lstlisting}[language=HTML]
+/scripts?jquery-1.4.2.min&amp;top&amp;site
+\end{lstlisting}
+
+Thus, a single request to the \varvalue{scripts} controller will render the content of all specified js files into the output of the \variable{script}.\\
+The controller just sets a new \keyword{registry} property with the query string parameters.\\
+The view retrieves this parameter, and for each of them, tries to \snippet{file\_get\_contents} the associated .js file located in the correct folder.
+If a file is not found, the view ignores it and continue with the next one.
+
+\clearpage
+
+\appendix
+\section{Configuration} \label{sec:configuration}
+
+\begin{lstlisting}[label=configuration-values,caption=Configuration values,language=bash]
+default:                       #Provides with default values for all properties for subclassing namespaces
+  system:                      #System configuration
+    debug: true|false          #Turn debug on/off
+    timezone:  [TIMEZONE]      #Valid timezone name. Eg: UTC , Asia/Tokyo
+    locales: [locale, ...]     #Supported locales. Eg: en_US, ja_JP
+    loglevel: [LOGLEVEL]       #From 0 to 7, or one of EMERG, ALERT, CRIT, ERR, WARN, NOTICE, INFO, DEBUG
+    session_timeout: [seconds] #If session plugin enabled, number of seconds until session timeouts
+    charset: UTF-8             #Default encoding used
+  plugins:                     #Defines init|view plugins to enable for current namespace
+    init:                      #List of init plugins to enable
+      - <plugin>
+      - ...
+    view:                      #List of view plugins to enable
+      - <plugin>
+      - ...
+    resources:                 #List of resource plugins to enable
+      - <plugin>
+      - ...
+  mysql:                       #If mysql plugin enabled, provides Mysql DB connection info
+    host: [host]               #Mysql host (default : localhost)
+    user: [user]               #Mysql user (default : '')
+    pass: [password]           #Mysql user password (default : '')
+    name: [db name]            #DB name to connect to (default : 'default')
+  mongoDB:                     #If mongoDB plugin enabled, provides MongoDB connection info
+    host: [host]               #MongoDB host (default : localhost)
+    port: [port number]        #MongoDB server port (default : 27017)
+    name: [db name]            #DB name to connect to (default : 'default')
+  directories:                 #Server directory names
+    resources: [resourcesdir]  #Name for the resources folder
+    skin: [skindir]            #Name for the skins folder. Under [site root dir (DATA_DIR)]
+    lang: [langdir]            #Name for the langs folder. Under [site root dir (DATA_DIR)]
+    upload: [uploaddir]        #Name for the upload folder. Under [resourcesdir]
+    log: [logsdir]             #Name for the logs folder. Under [resourcesdir]
+    cache: [cachedir]          #Name for the cache folder. Under [resourcesdir]
+
+<namespace>:
+  overrides: <namespace>|default # The namespace it overriddes. Should always override 'default' if none.
+  ... overridde properties ...
+
+...
+\end{lstlisting}
+
+\cleardoublepage
+
+\printindex
+
+\eod
+\end{document}
+

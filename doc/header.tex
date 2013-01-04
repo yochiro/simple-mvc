@@ -1,0 +1,118 @@
+\usepackage[pdftex]{graphicx}
+\usepackage[centering,includeheadfoot,margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{relsize}
+\usepackage{microtype}
+\usepackage{url}
+\usepackage{dirtree}
+\usepackage{pifont}
+\usepackage{listings}
+\usepackage{courier}
+\usepackage{framed}
+\usepackage{makeidx}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{hyperref}
+\usepackage[x11names, rgb]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{snakes,arrows,shapes}
+\usepackage{amsmath}
+
+\definecolor{orange}{rgb}{1,0.5,0}
+\definecolor{lightgray}{RGB}{249,249,249}
+\definecolor{darkgray}{RGB}{69,69,69}
+\definecolor{darkblue}{RGB}{29,88,145}
+
+\makeindex
+
+% For code snippets
+\lstset{%
+basicstyle=\scriptsize\ttfamily,
+stringstyle=\color{red},
+commentstyle=\itshape\color{darkblue},
+numbersep=5pt,
+extendedchars=true,
+backgroundcolor=\color{lightgray},
+xleftmargin=17pt,
+framexleftmargin=17pt,
+framexrightmargin=5pt,
+framexbottommargin=4pt,
+showspaces=false,
+showstringspaces=false,
+showtabs=false,
+frame=b,
+tabsize=2,
+captionpos=t,
+breaklines=true,
+breakatwhitespace=false%
+}
+
+\usepackage{caption}
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox[cmyk]{0.43, 0.35, 0.35,0.01}{\parbox{\textwidth}{\hspace{15pt}#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white, singlelinecheck=false, margin=0pt, font={bf,footnotesize}}
+
+\newcommand{\treedesc}[1]{\textsf{\scriptsize{#1}}}
+% For text describing a variable value placeholder without a defined value
+\newcommand{\uservariable}[1]{\fbox{``\textit{#1}''}\linebreak[0]}
+% For variable definitions defined by the framework
+\newcommand{\variable}[1]{\mbox{\texttt{#1}}\linebreak[0]}
+% For variable values defined by the framework
+\newcommand{\varvalue}[1]{\mbox{\color{orange}#1}\linebreak[0]}
+% For words that need indexing
+\newcommand{\keyword}[1]{\mbox{\textmd{{#1}}}\index{#1}\linebreak[0]}
+
+% For PHP classnames
+\newcommand{\classname}[1]{\mbox{\color{darkblue}\texttt{#1}}\linebreak[0]}
+% For PHP Constants
+\newcommand{\constant}[1]{\mbox{\color{red}\texttt{#1}}\linebreak[0]}
+% For PHP inline code snippets
+\newcommand{\snippet}[1]{\lstset{basicstyle=\ttfamily\small,language=PHP}\lstinline!#1!\lstset{basicstyle=\ttfamily\scriptsize}\linebreak[0]}
+
+% For filenames
+\newcommand{\filename}[1]{\mbox{\color{darkgray}\textit{#1}}\linebreak[0]}
+% For document names
+\newcommand{\docref}[1]{\mbox{\ding{226}\textsl{#1}}\linebreak[0]}
+
+\renewcommand{\labelitemi}{\ding{110}}
+%\newcommand{\implies}{\ding{229}}
+
+
+% For End of document
+\newcommand{\eod}{\vspace{\stretch{1}}\centering{\textbf{[END OF DOCUMENT]}}}
+
+% For latin abbreviations
+\newcommand{\eg}{e.g.\ }
+\newcommand{\ie}{i.e.\ }
+
+% For notes
+\newenvironment{note}
+{\begin{center}\textcircled{i}\hspace{1ex}%
+ \begin{minipage}{0.8\columnwidth}%
+ \begin{framed}%
+ \begin{small}%
+}
+{\end{small}%
+ \end{framed}%
+ \end{minipage}%
+ \end{center}%
+}
+
+% Prevent page breaking
+\newenvironment{unbreakable}{\samepage}{\pagebreak[0]}
+
+\hypersetup{
+    bookmarks=true,         % show bookmarks bar?
+    unicode=false,          % non-Latin characters in Acrobat’s bookmarks
+    pdftoolbar=true,        % show Acrobat’s toolbar?
+    pdfmenubar=true,        % show Acrobat’s menu?
+    pdffitwindow=false,     % window fit to page when opened
+    pdfstartview={FitH},    % fits the width of the page to the window
+    colorlinks=true,        % false: boxed links; true: colored links
+    linktoc=page,
+    linkcolor=red,          % color of internal links
+    citecolor=green,        % color of links to bibliography
+    filecolor=magenta,      % color of file links
+    urlcolor=blue           % color of external links
+}

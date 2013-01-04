@@ -1,0 +1,12 @@
+# Sample .htaccess : replace :BOOTSTRAP_FILE: with the bootstrap filename
+# Several sites can be initialized in this file; each should have their own bootstrap file.
+
+RewriteEngine On
+
+RewriteCond %{SERVER_NAME} ^:HOSTNAME:$
+RewriteCond %{SCRIPT_FILENAME} !-f
+RewriteRule ^(.*\/)?favicon\.ico$ skin/icons/favicon.ico
+
+RewriteCond %{SERVER_NAME} ^:HOSTNAME:$
+RewriteCond %{REQUEST_URI} !:BOOSTRAP_FILE:\.php
+RewriteRule ^(.*)$ :BOOTSTRAP_FILE:.php/$1 [L]
